@@ -1,10 +1,3 @@
-//
-//  Room.swift
-//  Boozzle
-//
-//  Created by Huda Chishtee on 12/02/2026.
-//
-
 import Foundation
 
 struct Room: Identifiable {
@@ -16,11 +9,11 @@ struct Room: Identifiable {
     
     // Computed property to tell the GameView if we can go to the next room
     var isFullyCleaned: Bool {
-        furnitureItems.allSatisfy { $0.isCleaned }
+        furnitureItems.allSatisfy { $0.isCleaned } // make this simple
     }
 }
 
-enum RoomType {
+enum RoomType : CaseIterable {
     case livingRoom
     case bedroom
     
