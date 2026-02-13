@@ -5,11 +5,18 @@ import SwiftUI
 class UpgradeVM: ObservableObject {
     @Published var coins: Int = 0
     @Published var furniture: [RoomType: [Furniture]] = [:]
-    @Published var unlockedRooms: Set<RoomType> = [.livingRoom]  // Living room starts unlocked
+    @Published var unlockedRooms: Set<RoomType> = [.livingRoom]
+    
+    // Timestamp to trigger UI updates in RoomView
+    @Published var lastUpdateTimestamp: Date = Date()
     
     init() {
         furniture[.livingRoom] = Furniture.livingRoomFurniture
         furniture[.bedroom] = Furniture.bedroomFurniture
+    }
+    
+    func forceUpdate() {
+        lastUpdateTimestamp = Date()
     }
     
     func getFurniture(for room: RoomType) -> [Furniture] {
@@ -25,7 +32,6 @@ class UpgradeVM: ObservableObject {
         RoomType.allCases.allSatisfy { isRoomFullyCleaned($0) }
     }
     
-    // Marks furniture as clean and checks if the room is done
     func markFurnitureAsCleaned(room: RoomType, furnitureName: String) {
         guard var roomFurniture = furniture[room],
               let index = roomFurniture.firstIndex(where: { $0.name == furnitureName }) else { return }
@@ -36,35 +42,59 @@ class UpgradeVM: ObservableObject {
         if isRoomFullyCleaned(room) {
             unlockNextRoom(after: room)
         }
+        forceUpdate()
     }
     
-    // Unlock the next room in sequence
     private func unlockNextRoom(after currentRoom: RoomType) {
+        // Unlocking logic disabled for safe release if needed
+        /*
         let allRooms = RoomType.allCases
         guard let currentIndex = allRooms.firstIndex(of: currentRoom),
               currentIndex + 1 < allRooms.count else { return }
         
         let nextRoom = allRooms[currentIndex + 1]
         unlockedRooms.insert(nextRoom)
-        print("Unlocked room: \(nextRoom.name)")
+        */
     }
     
+    // ✅ EQUIP: Switch skin without buying
+    func equipItem(room: RoomType, furnitureName: String, upgradeIndex: Int?) {
+        guard var roomFurniture = furniture[room],
+              let index = roomFurniture.firstIndex(where: { $0.name == furnitureName }) else { return }
+        
+        roomFurniture[index].equippedUpgradeIndex = upgradeIndex
+        furniture[room] = roomFurniture
+        forceUpdate()
+    }
+    
+    // ✅ PURCHASE: Buy and Add to Owned List
     func purchaseUpgrade(room: RoomType, furnitureName: String, upgradeIndex: Int) -> Bool {
         guard var roomFurniture = furniture[room],
-              let furnitureIndex = roomFurniture.firstIndex(where: { $0.name == furnitureName }) else { return false }
+              let index = roomFurniture.firstIndex(where: { $0.name == furnitureName }) else { return false }
         
-        // Safety check for index
-        guard upgradeIndex < roomFurniture[furnitureIndex].upgrades.count else { return false }
+        // 🛑 CRASH FIX: Ensure the upgrade actually exists
+        guard upgradeIndex >= 0 && upgradeIndex < roomFurniture[index].upgrades.count else {
+            print("Safety Catch: Upgrade index \(upgradeIndex) out of bounds.")
+            return false
+        }
         
-        let upgrade = roomFurniture[furnitureIndex].upgrades[upgradeIndex]
+        let upgrade = roomFurniture[index].upgrades[upgradeIndex]
+        
+        // If already owned, just equip (Fail-safe)
+        if roomFurniture[index].ownedUpgradeIndices.contains(upgradeIndex) {
+            equipItem(room: room, furnitureName: furnitureName, upgradeIndex: upgradeIndex)
+            return true
+        }
         
         guard coins >= upgrade.price else { return false }
         
-        // Purchase and upgrade furniture
+        // Transaction
         coins -= upgrade.price
-        roomFurniture[furnitureIndex].equippedUpgradeIndex = upgradeIndex
-        furniture[room] = roomFurniture
+        roomFurniture[index].ownedUpgradeIndices.insert(upgradeIndex)
+        roomFurniture[index].equippedUpgradeIndex = upgradeIndex
         
+        furniture[room] = roomFurniture
+        forceUpdate()
         return true
     }
     
