@@ -1,7 +1,5 @@
 import SwiftUI
 
-// MARK: - Data Models
-
 struct CoinGridCell {
     let color: Color
     var hasCoin: Bool
@@ -12,8 +10,6 @@ struct CoinBlockItem: Identifiable {
     var shape: [[Int]]
     let color: Color
     var isPlaced: Bool = false
-    
-    // Stores the exact coordinate (row, col) of the coin within this block
     var coinPosition: (r: Int, c: Int)? = nil
     
     mutating func rotate() {
@@ -28,14 +24,12 @@ struct CoinBlockItem: Identifiable {
         }
         self.shape = newShape
         
-        // Rotate the coin position to match the new shape
         if let pos = coinPosition {
             self.coinPosition = (r: pos.c, c: rows - 1 - pos.r)
         }
     }
 }
 
-// MARK: - Shape Definitions
 let COIN_SHAPES: [[[Int]]] = [
     [[1]], [[1, 1]], [[1], [1]], [[1, 1, 1]], [[1], [1], [1]],
     [[1, 1], [1, 1]], [[1, 1, 1], [0, 1, 0]], [[1, 1, 0], [0, 1, 1]],
@@ -43,18 +37,14 @@ let COIN_SHAPES: [[[Int]]] = [
 ]
 
 struct GameCoins: View {
-    // MARK: - Environment
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var vm: UpgradeVM
     
-    // MARK: - Brand Colors
     private let brandPurple = Color(red: 0x41/255, green: 0x23/255, blue: 0x5C/255)
     private let brandOrange = Color(red: 0xC2/255, green: 0x4D/255, blue: 0x32/255)
-    
     private let colorShuffle = Color(red: 0x41/255, green: 0x22/255, blue: 0x5C/255)
     private let colorRotate  = Color(red: 0xF7/255, green: 0xCC/255, blue: 0x59/255)
     private let colorBomb    = Color(red: 0xA9/255, green: 0x3A/255, blue: 0x4E/255)
-    
     private let boardBackground = Color(red: 0.95, green: 0.92, blue: 0.88)
     private let emptyCellColor = Color(white: 0.9, opacity: 0.6)
     
@@ -67,23 +57,17 @@ struct GameCoins: View {
     let rows = 10
     let cols = 10
     
-    // MARK: - Game State
     @State private var grid: [[CoinGridCell?]] = Array(repeating: Array(repeating: nil, count: 10), count: 10)
     @State private var hand: [CoinBlockItem] = []
     @State private var collectedCoins: Int = 0
     @State private var isGameOver = false
-    
     @State private var progressShuffle: Double = 1.0
     @State private var progressRotate: Double = 1.0
     @State private var progressBomb: Double = 1.0
-    
     @State private var isBombActive: Bool = false
     @State private var isRotateActive: Bool = false
-    
     @State private var gridFrame: CGRect = .zero
     @State private var cellSize: CGFloat = 0
-    
-    // Settings Sheet State
     @State private var showSettings = false
     
     init() {
@@ -105,8 +89,7 @@ struct GameCoins: View {
                 }
                 
                 if isGameOver {
-                    gameOverView
-                        .zIndex(20)
+                    gameOverView.zIndex(20)
                 }
             }
         }
@@ -114,11 +97,11 @@ struct GameCoins: View {
             SettingsSheetView(
                 isMainMenu: false,
                 resetAction: {
-                    saveCoinsAndReset() // Save coins before restarting
+                    saveCoinsAndReset()
                     showSettings = false
                 },
                 exitAction: {
-                    saveCoinsAndExit() // Save coins before exiting
+                    saveCoinsAndExit()
                     showSettings = false
                 }
             )
@@ -126,8 +109,6 @@ struct GameCoins: View {
             .interactiveDismissDisabled()
         }
     }
-    
-    // MARK: - UI Components
     
     private var headerView: some View {
         HStack {
@@ -151,7 +132,6 @@ struct GameCoins: View {
                     .foregroundColor(.white)
             }
             Spacer()
-            // Placeholder to balance the layout
             Color.clear.frame(width: 44, height: 44)
         }
         .padding(.horizontal, 20)
@@ -231,7 +211,6 @@ struct GameCoins: View {
             Color.black.opacity(0.7).ignoresSafeArea()
             VStack(spacing: 20) {
                 Text("GAME OVER").font(.largeTitle).fontWeight(.heavy).foregroundColor(.white)
-                
                 Text("You Earned:")
                     .font(.title2)
                     .foregroundColor(.white.opacity(0.8))
@@ -241,9 +220,7 @@ struct GameCoins: View {
                     Text("\(collectedCoins)").font(.largeTitle).fontWeight(.bold).foregroundColor(.yellow)
                 }
                 
-                Button(action: {
-                    saveCoinsAndReset()
-                }) {
+                Button(action: { saveCoinsAndReset() }) {
                     Text("Play Again")
                         .font(.headline)
                         .padding()
@@ -252,9 +229,7 @@ struct GameCoins: View {
                         .foregroundColor(brandPurple)
                 }
                 
-                Button(action: {
-                    saveCoinsAndExit()
-                }) {
+                Button(action: { saveCoinsAndExit() }) {
                     Text("Collect & Exit")
                         .font(.headline)
                         .padding()
@@ -266,15 +241,11 @@ struct GameCoins: View {
         }
     }
     
-    // MARK: - Logic
-    
-    // Helper to save coins before exiting
     func saveCoinsAndExit() {
         vm.addCoins(collectedCoins)
         dismiss()
     }
     
-    // Helper to save coins before resetting
     func saveCoinsAndReset() {
         vm.addCoins(collectedCoins)
         resetGame()
@@ -284,15 +255,11 @@ struct GameCoins: View {
         var newHand: [CoinBlockItem] = []
         for _ in 0..<3 {
             var block = CoinBlockItem(shape: COIN_SHAPES.randomElement()!, color: colors.randomElement()!)
-            
-            // Probability of 20% to have a coin
             if Double.random(in: 0...1) < 0.20 {
                 var validSpots: [(Int, Int)] = []
                 for r in 0..<block.shape.count {
                     for c in 0..<block.shape[r].count {
-                        if block.shape[r][c] == 1 {
-                            validSpots.append((r, c))
-                        }
+                        if block.shape[r][c] == 1 { validSpots.append((r, c)) }
                     }
                 }
                 if let spot = validSpots.randomElement() {
@@ -309,9 +276,7 @@ struct GameCoins: View {
             withAnimation {
                 var newItems = GameCoins.generateHand(colors: GameCoins.pieceColors)
                 for i in 0..<hand.count {
-                    if !hand[i].isPlaced {
-                        hand[i] = newItems[i]
-                    }
+                    if !hand[i].isPlaced { hand[i] = newItems[i] }
                 }
                 progressShuffle = 0.0
             }
@@ -384,9 +349,7 @@ struct GameCoins: View {
             for (ri, rowArr) in block.shape.enumerated() {
                 for (ci, val) in rowArr.enumerated() where val == 1 {
                     var cellHasCoin = false
-                    if let pos = block.coinPosition, pos.r == ri, pos.c == ci {
-                        cellHasCoin = true
-                    }
+                    if let pos = block.coinPosition, pos.r == ri, pos.c == ci { cellHasCoin = true }
                     grid[row + ri][col + ci] = CoinGridCell(color: block.color, hasCoin: cellHasCoin)
                 }
             }
@@ -406,10 +369,7 @@ struct GameCoins: View {
             var coinsCollected = 0
             for r in rClear { for c in 0..<cols where grid[r][c]?.hasCoin == true { coinsCollected += 1 } }
             for c in cClear { for r in 0..<rows where !rClear.contains(r) && grid[r][c]?.hasCoin == true { coinsCollected += 1 } }
-            
-            // ✅ Updates collection (50 per coin)
             collectedCoins += (coinsCollected * 50)
-            
             withAnimation {
                 for r in rClear { for c in 0..<cols { grid[r][c] = nil } }
                 for c in cClear { for r in 0..<rows { grid[r][c] = nil } }
@@ -443,17 +403,13 @@ struct GameCoins: View {
     }
 }
 
-// MARK: - Subviews
-
 struct CoinBoardCellView: View {
     let cell: CoinGridCell?
     let emptyColor: Color
     var body: some View {
         ZStack {
             Rectangle().fill(cell?.color ?? emptyColor).cornerRadius(2)
-            if cell?.hasCoin == true {
-                Image("coin").resizable().padding(4)
-            }
+            if cell?.hasCoin == true { Image("coin").resizable().padding(4) }
         }
     }
 }
@@ -467,8 +423,7 @@ struct CoinPowerButton: View {
                 Circle().fill(isActive ? color : color.opacity(progress >= 1.0 ? 0.9 : 0.3)).frame(width: 50, height: 50)
                     .overlay(Image(iconName).resizable().renderingMode(.template).frame(width: 25, height: 25).foregroundColor(.white))
             }
-        }
-        .disabled(progress < 1.0)
+        }.disabled(progress < 1.0)
     }
 }
 
@@ -494,9 +449,7 @@ struct CoinDraggableBlock: View {
                                 isRotate: isRotateActive,
                                 hasCoin: (block.coinPosition?.r == r && block.coinPosition?.c == c)
                             )
-                        } else {
-                            Color.clear.frame(width: currentSize, height: currentSize)
-                        }
+                        } else { Color.clear.frame(width: currentSize, height: currentSize) }
                     }
                 }
             }
@@ -515,14 +468,5 @@ struct CoinBlockCellView: View {
             if hasCoin { Image("coin").resizable().frame(width: size * 0.6, height: size * 0.6) }
             if isRotate && !isDrag { Image(systemName: "arrow.triangle.2.circlepath").foregroundColor(.white).font(.caption) }
         }
-    }
-}
-
-// MARK: - Preview Fix
-
-struct GameCoins_Previews: PreviewProvider {
-    static var previews: some View {
-        GameCoins()
-            .environmentObject(UpgradeVM()) // Inject VM for preview
     }
 }

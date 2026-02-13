@@ -21,7 +21,7 @@ struct MapView: View {
             VStack(spacing: 0) {
                 HStack {
                     Button(action: {
-                        dismiss() // Correctly goes back to Main Menu
+                        dismiss()
                     }) {
                         Image("back")
                             .resizable()
@@ -38,7 +38,6 @@ struct MapView: View {
                 Spacer()
                 
                 LazyVGrid(columns: columns, spacing: 0) {
-                    // Living Room Logic
                     if vm.unlockedRooms.contains(.livingRoom) {
                         NavigationLink(destination: RoomView(roomType: .livingRoom)) {
                             RoomCell(imageName: "room_living", isLocked: false, lockColor: lockBgColor)
@@ -47,7 +46,6 @@ struct MapView: View {
                         RoomCell(imageName: "room_living", isLocked: true, lockColor: lockBgColor)
                     }
                     
-                    // Bedroom Logic
                     if vm.unlockedRooms.contains(.bedroom) {
                         NavigationLink(destination: RoomView(roomType: .bedroom)) {
                             RoomCell(imageName: "room_bedroom", isLocked: false, lockColor: lockBgColor)
@@ -66,7 +64,7 @@ struct MapView: View {
         .navigationBarBackButtonHidden(true)
     }
 }
-// PASTE THIS AT THE VERY BOTTOM OF Mapview.swift
+
 struct RoomCell: View {
     let imageName: String
     let isLocked: Bool

@@ -4,7 +4,6 @@ class RoomScene: SKScene {
     var backgroundImage: String = ""
     var furnitureList: [Furniture] = []
     
-    // Scales furniture to look good on any screen
     private var furnitureScale: CGFloat {
         let referenceWidth: CGFloat = 393
         let scaleFactor = size.width / referenceWidth
@@ -15,16 +14,15 @@ class RoomScene: SKScene {
         refreshSceneContent()
     }
     
-    // ✅ NEW: Call this to update furniture instantly!
     func updateFurniture(newFurniture: [Furniture]) {
         self.furnitureList = newFurniture
         refreshSceneContent()
     }
     
     private func refreshSceneContent() {
-        removeAllChildren() // Clear old items
-        addBackground()     // Re-add wall
-        addFurniture()      // Re-add furniture (with new skins)
+        removeAllChildren()
+        addBackground()
+        addFurniture()
     }
     
     private func addBackground() {
@@ -47,8 +45,6 @@ class RoomScene: SKScene {
     
     private func addFurniture() {
         for item in furnitureList {
-            // Because we updated Models.swift, 'item.currentImage'
-            // will now automatically return "sofa-gold" when equipped.
             let sprite = SKSpriteNode(imageNamed: item.currentImage)
             
             sprite.position = CGPoint(
@@ -56,11 +52,15 @@ class RoomScene: SKScene {
                 y: size.height * item.position.y
             )
             sprite.zPosition = item.zPosition
-            sprite.setScale(item.scale * furnitureScale)
             sprite.name = item.name
             
-            // ✅ CLEANED UP: No more yellow tint logic.
-            // Your real gold assets will display naturally.
+            var finalScale = item.scale * furnitureScale
+            
+            if item.equippedUpgradeIndex != nil {
+                finalScale = finalScale * 0.25
+            }
+            
+            sprite.setScale(finalScale)
             
             addChild(sprite)
         }

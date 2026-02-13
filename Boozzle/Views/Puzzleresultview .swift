@@ -3,14 +3,13 @@ import SwiftUI
 struct PuzzleResultView: View {
     var didWin: Bool
     var resetAction: () -> Void
-    var successAction: () -> Void = {} // ✅ Added this action
+    var successAction: () -> Void = {}
     
     private let purple = Color(red: 0x41/255, green: 0x23/255, blue: 0x5C/255)
     private let orange = Color(red: 0xC2/255, green: 0x4D/255, blue: 0x32/255)
     private let buttonPurple = Color(red: 0x67/255, green: 0x2F/255, blue: 0x50/255)
     private let lightpurp = Color(red: 0x58/255, green: 0x2A/255, blue: 0x54/255)
 
-    // Layout constants
     private let topPadding: CGFloat = 72
     private let ghostHeightWin: CGFloat = 150
     private let ghostHeightLose: CGFloat = 150
@@ -41,7 +40,7 @@ struct PuzzleResultView: View {
             winningView
                 .contentShape(Rectangle())
                 .onTapGesture {
-                    successAction() // ✅ Triggers the close action
+                    successAction()
                 }
         } else {
             losingView

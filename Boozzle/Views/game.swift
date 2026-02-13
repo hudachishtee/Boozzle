@@ -1,7 +1,6 @@
 import SwiftUI
 import UIKit
 
-// MARK: - Data Models
 struct BlockItem: Identifiable {
     let id = UUID()
     var shape: [[Int]]
@@ -158,7 +157,6 @@ struct Game: View {
         }
         .navigationBarBackButtonHidden(true)
         .sheet(isPresented: $showSettings) {
-            // SETTINGS FOR GAME: Shows Restart and Continue
             SettingsSheetView(
                 isMainMenu: false,
                 resetAction: { showSettings = false; resetGame() },
@@ -169,12 +167,12 @@ struct Game: View {
         }
     }
     
-    // Logic Functions
     static func generateHand(colors: [Color]) -> [BlockItem] {
         var newHand: [BlockItem] = []
         for _ in 0..<3 { newHand.append(BlockItem(shape: SHAPES.randomElement()!, color: colors.randomElement()!)) }
         return newHand
     }
+    
     func activateShuffle() {
         if progressShuffle >= 1.0 {
             withAnimation {
@@ -185,11 +183,13 @@ struct Game: View {
             }
         }
     }
+    
     func handleTap(index: Int) {
         if isRotateActive && progressRotate >= 1.0 {
             withAnimation(.spring()) { hand[index].rotate(); progressRotate = 0.0; isRotateActive = false }
         }
     }
+    
     func handleDrop(index: Int, location: CGPoint) {
         let shape = hand[index].shape
         let blockRows = shape.count; let blockCols = shape[0].count
@@ -210,6 +210,7 @@ struct Game: View {
             }
         }
     }
+    
     func triggerBomb(row: Int, col: Int) {
         UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
         withAnimation(.easeIn(duration: 0.1)) {
@@ -219,6 +220,7 @@ struct Game: View {
             }}
         }
     }
+    
     func canPlace(shape: [[Int]], row: Int, col: Int) -> Bool {
         for (rowIndex, rowArr) in shape.enumerated() {
             for (colIndex, val) in rowArr.enumerated() {
@@ -231,6 +233,7 @@ struct Game: View {
         }
         return true
     }
+    
     func placeBlock(shape: [[Int]], color: Color, row: Int, col: Int) {
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
         withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
@@ -242,6 +245,7 @@ struct Game: View {
         }
         score += 10
     }
+    
     func checkLines() {
         var rowsToClear: [Int] = []; var colsToClear: [Int] = []
         for r in 0..<rows { if grid[r].compactMap({$0}).count == cols { rowsToClear.append(r) } }
@@ -260,6 +264,7 @@ struct Game: View {
             if levelProgress >= 1.0 { isGameWon = true }
         }
     }
+    
     func checkRefill() {
         if hand.allSatisfy({ $0.isPlaced }) {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
@@ -268,6 +273,7 @@ struct Game: View {
             }
         } else { if checkLoss() { isGameOver = true } }
     }
+    
     func checkLoss() -> Bool {
         if progressBomb >= 1.0 || progressShuffle >= 1.0 { return false }
         for block in hand where !block.isPlaced {
@@ -284,6 +290,7 @@ struct Game: View {
         }
         return true
     }
+    
     func resetGame() {
         grid = Array(repeating: Array(repeating: nil, count: rows), count: cols)
         score = 0; levelProgress = 0.0; progressShuffle = 1.0; progressRotate = 1.0; progressBomb = 1.0
@@ -291,7 +298,6 @@ struct Game: View {
     }
 }
 
-// MARK: - Subviews
 struct PowerUpButton: View {
     let iconName: String; let color: Color; let progress: Double; let isActive: Bool; let action: () -> Void
     var body: some View {
@@ -328,7 +334,6 @@ struct DraggableBlock: View {
     }
 }
 
-// MARK: - THE SMART SETTINGS VIEW
 struct SettingsSheetView: View {
     @Environment(\.dismiss) var dismissSheet
     var isMainMenu: Bool = false

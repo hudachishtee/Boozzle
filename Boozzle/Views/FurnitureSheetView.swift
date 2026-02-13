@@ -57,7 +57,6 @@ struct FurnitureSheetView: View {
                 }
             }
             
-            // THE CUSTOM IN-GAME POPUP
             if let item = itemToBuy, let upIndex = upgradeIndexToBuy {
                 if upIndex >= 0 && upIndex < item.upgrades.count {
                     let upgrade = item.upgrades[upIndex]
@@ -115,6 +114,11 @@ struct FurnitureSheetView: View {
                         .padding(.horizontal, 40)
                     }
                     .zIndex(100)
+                } else {
+                    Color.clear.onAppear {
+                        itemToBuy = nil
+                        upgradeIndexToBuy = nil
+                    }
                 }
             }
         }
@@ -132,13 +136,12 @@ struct FurnitureRow: View {
     
     var body: some View {
         HStack(spacing: 16) {
-            // IMAGE AREA
             if isShopMode && !furniture.upgrades.isEmpty {
                 HStack(spacing: 8) {
                     Button(action: { if selectedUpgradeIndex > 0 { selectedUpgradeIndex -= 1 } }) {
                         Image(systemName: "chevron.left").foregroundColor(.white).font(.title2)
                     }
-                    .buttonStyle(.plain) // ✅ FIX: Prevents SwiftUI click bug
+                    .buttonStyle(.plain)
                     .disabled(selectedUpgradeIndex == 0)
                     .opacity(selectedUpgradeIndex == 0 ? 0.3 : 1.0)
                     
@@ -153,7 +156,7 @@ struct FurnitureRow: View {
                     Button(action: { if selectedUpgradeIndex < furniture.upgrades.count { selectedUpgradeIndex += 1 } }) {
                         Image(systemName: "chevron.right").foregroundColor(.white).font(.title2)
                     }
-                    .buttonStyle(.plain) // ✅ FIX
+                    .buttonStyle(.plain)
                     .disabled(selectedUpgradeIndex >= furniture.upgrades.count)
                     .opacity(selectedUpgradeIndex >= furniture.upgrades.count ? 0.3 : 1.0)
                 }
@@ -164,7 +167,6 @@ struct FurnitureRow: View {
             
             Spacer()
             
-            // BUTTON AREA
             if isShopMode {
                 shopButton
             } else {
@@ -172,7 +174,7 @@ struct FurnitureRow: View {
                     Text("Cleaned").font(.headline).foregroundColor(.white).padding(12).background(Capsule().stroke(Color.white, lineWidth: 1))
                 } else {
                     Button("Clean") { onCleanTap() }
-                        .buttonStyle(.plain) // ✅ FIX
+                        .buttonStyle(.plain)
                         .font(.headline).foregroundColor(.white).padding(12).background(Capsule().stroke(Color.white, lineWidth: 1))
                 }
             }
@@ -202,7 +204,7 @@ struct FurnitureRow: View {
             Button("Equip") {
                 onEquip(selectedUpgradeIndex)
             }
-            .buttonStyle(.plain) // ✅ FIX
+            .buttonStyle(.plain)
             .font(.headline).foregroundColor(.white)
             .padding(12)
             .background(Capsule().fill(Color.blue.opacity(0.8)))
@@ -211,7 +213,7 @@ struct FurnitureRow: View {
                 Button("Buy") {
                     onRequestPurchase(selectedUpgradeIndex - 1)
                 }
-                .buttonStyle(.plain) // ✅ FIX: This makes the "Buy" button actually work instead of clicking the left arrow!
+                .buttonStyle(.plain)
                 .font(.headline).foregroundColor(.white)
                 .padding(.horizontal, 24)
                 .padding(.vertical, 12)
@@ -221,7 +223,6 @@ struct FurnitureRow: View {
     }
 }
 
-// MARK: - Color Hex Helper
 extension Color {
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)

@@ -4,11 +4,9 @@ struct PuzzleConfirmationView: View {
     let room: RoomType
     let furniture: Furniture
     
-    // ✅ Added: Controls navigation flow
     @Binding var shouldPopToRoot: Bool
     @EnvironmentObject var vm: UpgradeVM
 
-    // Brand colors
     private let purple = Color(red: 0x41/255, green: 0x23/255, blue: 0x5C/255)
     private let orange = Color(red: 0xC2/255, green: 0x4D/255, blue: 0x32/255)
     private let lightpurp = Color(red: 0x58/255, green: 0x2A/255, blue: 0x54/255)
@@ -45,8 +43,6 @@ struct PuzzleConfirmationView: View {
                 )
                 .padding(.horizontal, 28)
 
-                // ✅ Navigation to Game
-                // We pass the "onWin" logic here
                 NavigationLink(destination: Game(
                     onWin: {
                         vm.markFurnitureAsCleaned(room: room, furnitureName: furniture.name)

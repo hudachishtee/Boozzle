@@ -31,7 +31,6 @@ struct MainView: View {
                     .padding(.bottom, 120)
                 }
             }
-            // SETTINGS FOR MAIN: Simplified version
             .sheet(isPresented: $showSettings) {
                 SettingsSheetView(
                     isMainMenu: true,
@@ -45,6 +44,7 @@ struct MainView: View {
 
 struct GameButtonStyle: ButtonStyle {
     private let buttonPurple = Color(red: 0x67/255, green: 0x2F/255, blue: 0x50/255)
+    
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.custom("Arial-Black", size: 26))
