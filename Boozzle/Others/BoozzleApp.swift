@@ -1,17 +1,14 @@
-//
-//  BoozzleApp.swift
-//  Boozzle
-//
-//  Created by Huda Chishtee on 12/02/2026.
-//
-
 import SwiftUI
 
 @main
 struct BoozzleApp: App {
+    // We create the "Brain" here once
+    @StateObject private var upgradeVM = UpgradeVM()
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainView()
+                .environmentObject(upgradeVM) // Pass it to all views
         }
     }
 }
