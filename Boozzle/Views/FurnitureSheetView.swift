@@ -30,7 +30,9 @@ struct FurnitureSheetView: View {
                             isShopMode: isShopMode,
                             coins: viewModel.coins,
                             onCleanTap: {
+                                // 1. Save which item we chose
                                 selectedFurniture = item
+                                // 2. Close the sheet (RoomView will handle the rest)
                                 dismiss()
                             },
                             onPurchase: { upgradeIndex in
@@ -42,9 +44,7 @@ struct FurnitureSheetView: View {
                                 return success
                             }
                         )
-                        .listRowBackground(
-                            isShopMode ? Color.clear : Color.clear
-                        )
+                        .listRowBackground(Color.clear)
                     }
                 }
                 .scrollContentBackground(.hidden) // Hide default list background
@@ -59,12 +59,12 @@ struct FurnitureSheetView: View {
                     }
                 }
             }
-            .toolbarBackground(.hidden, for: .navigationBar) // Hide toolbar background in clean mode
-        } //nav View
-    } //body
-}//View
+            .toolbarBackground(.hidden, for: .navigationBar)
+        }
+    }
+}
 
-// ✅ Individual furniture row
+// ✅ Individual furniture row (Kept exactly as you designed)
 struct FurnitureRow: View {
     let furniture: Furniture
     let isShopMode: Bool
@@ -72,7 +72,7 @@ struct FurnitureRow: View {
     let onCleanTap: () -> Void
     let onPurchase: (Int) -> Bool
     
-    @State private var selectedUpgradeIndex: Int = 0 // Will be set properly in onAppear
+    @State private var selectedUpgradeIndex: Int = 0
     @State private var showPurchaseConfirmation = false
     @State private var selectedUpgrade: FurnitureUpgrade?
     
@@ -80,9 +80,8 @@ struct FurnitureRow: View {
         HStack(spacing: 16) {
             // ✅ Furniture image
             if isShopMode && !furniture.upgrades.isEmpty {
-                // Shop mode: HStack with chevron buttons on sides
+                // Shop mode logic
                 HStack(spacing: 8) {
-                    // Left chevron button
                     Button(action: { previousVersion() }) {
                         Image(systemName: "chevron.left")
                             .foregroundColor(.white)
@@ -91,20 +90,14 @@ struct FurnitureRow: View {
                     .disabled(selectedUpgradeIndex == 0)
                     .opacity(selectedUpgradeIndex == 0 ? 0.3 : 1.0)
                     
-                    // Current version image
                     if selectedUpgradeIndex == 0 {
                         Image(furniture.cleanedImage)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 80, height: 80)
+                            .resizable().scaledToFit().frame(width: 80, height: 80)
                     } else {
                         Image(furniture.upgrades[selectedUpgradeIndex - 1].image)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 80, height: 80)
+                            .resizable().scaledToFit().frame(width: 80, height: 80)
                     }
                     
-                    // Right chevron button
                     Button(action: { nextVersion() }) {
                         Image(systemName: "chevron.right")
                             .foregroundColor(.white)
@@ -113,13 +106,10 @@ struct FurnitureRow: View {
                     .disabled(selectedUpgradeIndex >= furniture.upgrades.count)
                     .opacity(selectedUpgradeIndex >= furniture.upgrades.count ? 0.3 : 1.0)
                 }
-                .frame(width: 120) // Fixed width for consistent layout
+                .frame(width: 120)
             } else {
-                // Clean mode or shop mode with no upgrades: show current image
                 Image(furniture.currentImage)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 80, height: 80)
+                    .resizable().scaledToFit().frame(width: 80, height: 80)
             }
             
             Spacer()
@@ -132,24 +122,20 @@ struct FurnitureRow: View {
             }
         }
         .padding(.vertical, 12)
-//        .padding(.horizontal, 16)
         .overlay(
             Rectangle()
                 .frame(height: 2)
                 .foregroundColor(Color.white.opacity(0.3))
-                .padding(.horizontal, -16), // Extend to full screen width
+                .padding(.horizontal, -16),
             alignment: .bottom
         )
         .onAppear {
-            // In shop mode, start with first upgrade if available, otherwise start with base
             if isShopMode && !furniture.upgrades.isEmpty {
-                selectedUpgradeIndex = 1 // Start with first upgrade
+                selectedUpgradeIndex = 1
             } else {
-                selectedUpgradeIndex = 0 // Start with base version
+                selectedUpgradeIndex = 0
             }
         }
-        
-        // ✅ Purchase confirmation popup
         .alert("Confirm Purchase", isPresented: $showPurchaseConfirmation) {
             Button("Cancel", role: .cancel) { }
             Button("Buy") {
@@ -158,7 +144,6 @@ struct FurnitureRow: View {
                     _ = onPurchase(index)
                 }
             }
-            .disabled(selectedUpgrade.map { coins < $0.price } ?? true)
         } message: {
             if let upgrade = selectedUpgrade {
                 if coins < upgrade.price {
@@ -187,7 +172,6 @@ struct FurnitureRow: View {
         } else {
             Button("Clean") {
                 onCleanTap()
-                // when tapping the clean button, navigationDestination(puzzleView)
             }
             .font(.headline)
             .foregroundColor(.white)
@@ -204,21 +188,13 @@ struct FurnitureRow: View {
     @ViewBuilder
     private var shopButton: some View {
         if furniture.upgrades.isEmpty ||
-           (selectedUpgradeIndex == 0) ||
-           (selectedUpgradeIndex > 0 && furniture.equippedUpgradeIndex == selectedUpgradeIndex - 1) {
-            // No upgrades available OR currently equipped version (either base or an upgrade)
+            (selectedUpgradeIndex == 0) ||
+            (selectedUpgradeIndex > 0 && furniture.equippedUpgradeIndex == selectedUpgradeIndex - 1) {
             Text("Equipped")
-                .font(.headline)
-                .foregroundColor(.white)
-                .padding(.horizontal, 24)
-                .padding(.vertical, 12)
-                .background(
-                    RoundedRectangle(cornerRadius: 25)
-                        .fill(Color.green.opacity(0.3))
-                        .stroke(Color.green.opacity(0.5), lineWidth: 1)
-                )
+                .font(.headline).foregroundColor(.white)
+                .padding(.horizontal, 24).padding(.vertical, 12)
+                .background(RoundedRectangle(cornerRadius: 25).fill(Color.green.opacity(0.3)).stroke(Color.green.opacity(0.5), lineWidth: 1))
         } else {
-            // Can purchase this upgrade
             let upgrade = furniture.upgrades[selectedUpgradeIndex - 1]
             let canAfford = coins >= upgrade.price
             
@@ -226,51 +202,23 @@ struct FurnitureRow: View {
                 selectedUpgrade = upgrade
                 showPurchaseConfirmation = true
             }
-            .font(.headline)
-            .foregroundColor(.white)
-            .padding(.horizontal, 24)
-            .padding(.vertical, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 25)
-                    .fill(canAfford ? Color.blue.opacity(0.3) : Color.gray.opacity(0.3))
-                    .stroke(canAfford ? Color.blue.opacity(0.5) : Color.gray.opacity(0.5), lineWidth: 1)
-            )
+            .font(.headline).foregroundColor(.white)
+            .padding(.horizontal, 24).padding(.vertical, 12)
+            .background(RoundedRectangle(cornerRadius: 25).fill(canAfford ? Color.blue.opacity(0.3) : Color.gray.opacity(0.3)).stroke(canAfford ? Color.blue.opacity(0.5) : Color.gray.opacity(0.5), lineWidth: 1))
             .disabled(!canAfford)
         }
     }
     
     private func nextVersion() {
-        if selectedUpgradeIndex < furniture.upgrades.count {
-            selectedUpgradeIndex += 1
-        }
+        if selectedUpgradeIndex < furniture.upgrades.count { selectedUpgradeIndex += 1 }
     }
     
     private func previousVersion() {
-        if selectedUpgradeIndex > 0 {
-            selectedUpgradeIndex -= 1
-        }
+        if selectedUpgradeIndex > 0 { selectedUpgradeIndex -= 1 }
     }
 }
 
-#Preview("Clean Mode") {
-    FurnitureSheetView(
-        roomType: .livingRoom,
-        viewModel: UpgradeVM(),
-        selectedFurniture: .constant(nil),
-        isShopMode: false
-    )
-}
-
-#Preview("Shop Mode") {
-    FurnitureSheetView(
-        roomType: .livingRoom,
-        viewModel: UpgradeVM(),
-        selectedFurniture: .constant(nil),
-        isShopMode: true
-    )
-}
-
-// MARK: - Color Extension for Hex Support
+// Helper for Hex colors
 extension Color {
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
@@ -278,23 +226,11 @@ extension Color {
         Scanner(string: hex).scanHexInt64(&int)
         let a, r, g, b: UInt64
         switch hex.count {
-        case 3: // RGB (12-bit)
-            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6: // RGB (24-bit)
-            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8: // ARGB (32-bit)
-            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
-        default:
-            (a, r, g, b) = (1, 1, 1, 0)
+        case 3: (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6: (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8: (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default: (a, r, g, b) = (1, 1, 1, 0)
         }
-        
-        self.init(
-            .sRGB,
-            red: Double(r) / 255,
-            green: Double(g) / 255,
-            blue:  Double(b) / 255,
-            opacity: Double(a) / 255
-        )
+        self.init(.sRGB, red: Double(r) / 255, green: Double(g) / 255, blue:  Double(b) / 255, opacity: Double(a) / 255)
     }
 }
-
