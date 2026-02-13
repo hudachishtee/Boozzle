@@ -1,7 +1,7 @@
 import SwiftUI
-import UIKit
 
 // MARK: - Data Models
+
 struct CoinGridCell {
     let color: Color
     var hasCoin: Bool
@@ -12,24 +12,30 @@ struct CoinBlockItem: Identifiable {
     var shape: [[Int]]
     let color: Color
     var isPlaced: Bool = false
+    
+    // Stores the exact coordinate (row, col) of the coin within this block
     var coinPosition: (r: Int, c: Int)? = nil
     
     mutating func rotate() {
         let rows = shape.count
         let cols = shape[0].count
         var newShape = Array(repeating: Array(repeating: 0, count: rows), count: cols)
+        
         for r in 0..<rows {
             for c in 0..<cols {
                 newShape[c][rows - 1 - r] = shape[r][c]
             }
         }
         self.shape = newShape
+        
+        // Rotate the coin position to match the new shape
         if let pos = coinPosition {
             self.coinPosition = (r: pos.c, c: rows - 1 - pos.r)
         }
     }
 }
 
+// MARK: - Shape Definitions
 let COIN_SHAPES: [[[Int]]] = [
     [[1]], [[1, 1]], [[1], [1]], [[1, 1, 1]], [[1], [1], [1]],
     [[1, 1], [1, 1]], [[1, 1, 1], [0, 1, 0]], [[1, 1, 0], [0, 1, 1]],
@@ -37,36 +43,53 @@ let COIN_SHAPES: [[[Int]]] = [
 ]
 
 struct GameCoins: View {
+    // MARK: - Environment
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var vm: UpgradeVM
-
+    
+    // MARK: - Brand Colors
     private let brandPurple = Color(red: 0x41/255, green: 0x23/255, blue: 0x5C/255)
     private let brandOrange = Color(red: 0xC2/255, green: 0x4D/255, blue: 0x32/255)
+    
     private let colorShuffle = Color(red: 0x41/255, green: 0x22/255, blue: 0x5C/255)
     private let colorRotate  = Color(red: 0xF7/255, green: 0xCC/255, blue: 0x59/255)
     private let colorBomb    = Color(red: 0xA9/255, green: 0x3A/255, blue: 0x4E/255)
+    
     private let boardBackground = Color(red: 0.95, green: 0.92, blue: 0.88)
     private let emptyCellColor = Color(white: 0.9, opacity: 0.6)
-
+    
+    static let pieceColors: [Color] = [
+        Color(red: 247/255, green: 204/255, blue: 89/255),
+        Color(red: 65/255, green: 35/255, blue: 92/255),
+        Color(red: 176/255, green: 65/255, blue: 82/255)
+    ]
+    
+    let rows = 10
+    let cols = 10
+    
+    // MARK: - Game State
     @State private var grid: [[CoinGridCell?]] = Array(repeating: Array(repeating: nil, count: 10), count: 10)
     @State private var hand: [CoinBlockItem] = []
     @State private var collectedCoins: Int = 0
     @State private var isGameOver = false
+    
     @State private var progressShuffle: Double = 1.0
     @State private var progressRotate: Double = 1.0
     @State private var progressBomb: Double = 1.0
+    
     @State private var isBombActive: Bool = false
     @State private var isRotateActive: Bool = false
+    
     @State private var gridFrame: CGRect = .zero
     @State private var cellSize: CGFloat = 0
-
-    let rows = 10
-    let cols = 10
-
+    
+    // Settings Sheet State
+    @State private var showSettings = false
+    
     init() {
         _hand = State(initialValue: GameCoins.generateHand(colors: GameCoins.pieceColors))
     }
-
+    
     var body: some View {
         GeometryReader { geo in
             ZStack {
@@ -74,95 +97,207 @@ struct GameCoins: View {
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    HStack {
-                        Button(action: { resetGame() }) {
-                            Image("settings").resizable().aspectRatio(contentMode: .fit).frame(width: 44, height: 44)
-                        }
-                        Spacer()
-                        VStack(spacing: 2) {
-                            Image("coin").resizable().frame(width: 35, height: 35)
-                            Text("\(collectedCoins)").font(.system(size: 24, weight: .heavy, design: .rounded)).foregroundColor(.white)
-                        }
-                        Spacer()
-                        Color.clear.frame(width: 44, height: 44)
-                    }
-                    .padding(.horizontal, 20).padding(.vertical, 10)
-                    
-                    HStack(spacing: 30) {
-                        CoinPowerButton(iconName: "shuffle", color: colorShuffle, progress: progressShuffle, isActive: false, action: activateShuffle)
-                        CoinPowerButton(iconName: "rotate", color: colorRotate, progress: progressRotate, isActive: isRotateActive, action: { isRotateActive.toggle(); isBombActive = false })
-                        CoinPowerButton(iconName: "bomb", color: colorBomb, progress: progressBomb, isActive: isBombActive, action: { isBombActive.toggle(); isRotateActive = false })
-                    }
-                    .padding(.bottom, 20)
-                    
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 12).fill(boardBackground).shadow(radius: 10, y: 5)
-                        VStack(spacing: 2) {
-                            ForEach(0..<rows, id: \.self) { r in
-                                HStack(spacing: 2) {
-                                    ForEach(0..<cols, id: \.self) { c in
-                                        CoinBoardCellView(cell: grid[r][c], emptyColor: emptyCellColor)
-                                    }
-                                }
-                            }
-                        }
-                        .padding(8)
-                        .background(GeometryReader { boardGeo -> Color in
-                            DispatchQueue.main.async {
-                                self.gridFrame = boardGeo.frame(in: .global)
-                                self.cellSize = (gridFrame.width - 16) / CGFloat(cols)
-                            }
-                            return Color.clear
-                        })
-                    }
-                    .aspectRatio(1, contentMode: .fit).padding(.horizontal, 20)
-                    
+                    headerView
+                    powerUpsRow
+                    gridView
                     Spacer()
-                    
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 25).fill(Color.black.opacity(0.2)).frame(height: 100).padding(.horizontal, 10)
-                        HStack(spacing: 25) {
-                            ForEach(hand.indices, id: \.self) { index in
-                                if !hand[index].isPlaced {
-                                    CoinDraggableBlock(
-                                        block: hand[index], cellSize: 30, gridCellSize: cellSize,
-                                        isBombActive: isBombActive, isRotateActive: isRotateActive,
-                                        onDragEnd: { location in handleDrop(index: index, location: location) },
-                                        onTap: { handleTap(index: index) }
-                                    )
-                                } else { Color.clear.frame(width: 90, height: 90) }
-                            }
-                        }
-                    }
-                    .frame(height: 140).padding(.bottom, 20)
+                    handView
                 }
                 
                 if isGameOver {
-                    AfterPuzzleScreen()
-                        .onTapGesture {
-                            vm.addCoins(collectedCoins)
-                            dismiss()
-                        }
-                        .zIndex(100)
+                    gameOverView
+                        .zIndex(20)
                 }
             }
         }
-        .navigationBarBackButtonHidden(true)
+        .sheet(isPresented: $showSettings) {
+            SettingsSheetView(
+                isMainMenu: false,
+                resetAction: {
+                    saveCoinsAndReset() // Save coins before restarting
+                    showSettings = false
+                },
+                exitAction: {
+                    saveCoinsAndExit() // Save coins before exiting
+                    showSettings = false
+                }
+            )
+            .presentationBackground(brandPurple)
+            .interactiveDismissDisabled()
+        }
     }
     
-    // MARK: - Logic Functions
+    // MARK: - UI Components
+    
+    private var headerView: some View {
+        HStack {
+            Button(action: { showSettings = true }) {
+                Image("settings")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 44, height: 44)
+                    .shadow(radius: 3)
+            }
+            Spacer()
+            VStack(spacing: 2) {
+                Image("coin")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 35, height: 35)
+                    .shadow(radius: 2)
+                
+                Text("\(collectedCoins)")
+                    .font(.system(size: 24, weight: .heavy, design: .rounded))
+                    .foregroundColor(.white)
+            }
+            Spacer()
+            // Placeholder to balance the layout
+            Color.clear.frame(width: 44, height: 44)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 10)
+    }
+    
+    private var powerUpsRow: some View {
+        HStack(spacing: 30) {
+            CoinPowerButton(iconName: "shuffle", color: colorShuffle, progress: progressShuffle, isActive: false, action: activateShuffle)
+            CoinPowerButton(iconName: "rotate", color: colorRotate, progress: progressRotate, isActive: isRotateActive, action: { isRotateActive.toggle(); isBombActive = false })
+            CoinPowerButton(iconName: "bomb", color: colorBomb, progress: progressBomb, isActive: isBombActive, action: { isBombActive.toggle(); isRotateActive = false })
+        }
+        .padding(.bottom, 20)
+    }
+    
+    private var gridView: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 12)
+                .fill(boardBackground)
+                .shadow(color: .black.opacity(0.3), radius: 10, y: 5)
+            
+            VStack(spacing: 2) {
+                ForEach(0..<rows, id: \.self) { r in
+                    HStack(spacing: 2) {
+                        ForEach(0..<cols, id: \.self) { c in
+                            CoinBoardCellView(cell: grid[r][c], emptyColor: emptyCellColor)
+                        }
+                    }
+                }
+            }
+            .padding(8)
+            .background(GeometryReader { boardGeo -> Color in
+                DispatchQueue.main.async {
+                    self.gridFrame = boardGeo.frame(in: .global)
+                    self.cellSize = (gridFrame.width - 16) / CGFloat(cols)
+                }
+                return Color.clear
+            })
+        }
+        .aspectRatio(1, contentMode: .fit)
+        .padding(.horizontal, 20)
+    }
+    
+    private var handView: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 25)
+                .fill(Color.black.opacity(0.2))
+                .frame(height: 100)
+                .padding(.horizontal, 10)
+            
+            HStack(spacing: 25) {
+                ForEach(hand.indices, id: \.self) { index in
+                    if !hand[index].isPlaced {
+                        CoinDraggableBlock(
+                            block: hand[index],
+                            cellSize: 30,
+                            gridCellSize: cellSize,
+                            isBombActive: isBombActive,
+                            isRotateActive: isRotateActive,
+                            onDragEnd: { location in
+                                handleDrop(index: index, location: location)
+                            },
+                            onTap: { handleTap(index: index) }
+                        )
+                    } else {
+                        Color.clear.frame(width: 90, height: 90)
+                    }
+                }
+            }
+        }
+        .frame(height: 140)
+        .padding(.bottom, 20)
+    }
+    
+    private var gameOverView: some View {
+        ZStack {
+            Color.black.opacity(0.7).ignoresSafeArea()
+            VStack(spacing: 20) {
+                Text("GAME OVER").font(.largeTitle).fontWeight(.heavy).foregroundColor(.white)
+                
+                Text("You Earned:")
+                    .font(.title2)
+                    .foregroundColor(.white.opacity(0.8))
+                
+                HStack {
+                    Image("coin").resizable().frame(width: 30, height: 30)
+                    Text("\(collectedCoins)").font(.largeTitle).fontWeight(.bold).foregroundColor(.yellow)
+                }
+                
+                Button(action: {
+                    saveCoinsAndReset()
+                }) {
+                    Text("Play Again")
+                        .font(.headline)
+                        .padding()
+                        .frame(maxWidth: 200)
+                        .background(Capsule().fill(Color.white))
+                        .foregroundColor(brandPurple)
+                }
+                
+                Button(action: {
+                    saveCoinsAndExit()
+                }) {
+                    Text("Collect & Exit")
+                        .font(.headline)
+                        .padding()
+                        .frame(maxWidth: 200)
+                        .background(Capsule().fill(brandOrange))
+                        .foregroundColor(.white)
+                }
+            }
+        }
+    }
+    
+    // MARK: - Logic
+    
+    // Helper to save coins before exiting
+    func saveCoinsAndExit() {
+        vm.addCoins(collectedCoins)
+        dismiss()
+    }
+    
+    // Helper to save coins before resetting
+    func saveCoinsAndReset() {
+        vm.addCoins(collectedCoins)
+        resetGame()
+    }
+    
     static func generateHand(colors: [Color]) -> [CoinBlockItem] {
         var newHand: [CoinBlockItem] = []
         for _ in 0..<3 {
             var block = CoinBlockItem(shape: COIN_SHAPES.randomElement()!, color: colors.randomElement()!)
+            
+            // Probability of 20% to have a coin
             if Double.random(in: 0...1) < 0.20 {
                 var validSpots: [(Int, Int)] = []
                 for r in 0..<block.shape.count {
                     for c in 0..<block.shape[r].count {
-                        if block.shape[r][c] == 1 { validSpots.append((r, c)) }
+                        if block.shape[r][c] == 1 {
+                            validSpots.append((r, c))
+                        }
                     }
                 }
-                if let spot = validSpots.randomElement() { block.coinPosition = spot }
+                if let spot = validSpots.randomElement() {
+                    block.coinPosition = spot
+                }
             }
             newHand.append(block)
         }
@@ -172,9 +307,11 @@ struct GameCoins: View {
     func activateShuffle() {
         if progressShuffle >= 1.0 {
             withAnimation {
-                let newItems = GameCoins.generateHand(colors: GameCoins.pieceColors)
+                var newItems = GameCoins.generateHand(colors: GameCoins.pieceColors)
                 for i in 0..<hand.count {
-                    if !hand[i].isPlaced { hand[i] = newItems[i] }
+                    if !hand[i].isPlaced {
+                        hand[i] = newItems[i]
+                    }
                 }
                 progressShuffle = 0.0
             }
@@ -247,7 +384,9 @@ struct GameCoins: View {
             for (ri, rowArr) in block.shape.enumerated() {
                 for (ci, val) in rowArr.enumerated() where val == 1 {
                     var cellHasCoin = false
-                    if let pos = block.coinPosition, pos.r == ri, pos.c == ci { cellHasCoin = true }
+                    if let pos = block.coinPosition, pos.r == ri, pos.c == ci {
+                        cellHasCoin = true
+                    }
                     grid[row + ri][col + ci] = CoinGridCell(color: block.color, hasCoin: cellHasCoin)
                 }
             }
@@ -267,7 +406,10 @@ struct GameCoins: View {
             var coinsCollected = 0
             for r in rClear { for c in 0..<cols where grid[r][c]?.hasCoin == true { coinsCollected += 1 } }
             for c in cClear { for r in 0..<rows where !rClear.contains(r) && grid[r][c]?.hasCoin == true { coinsCollected += 1 } }
+            
+            // ✅ Updates collection (50 per coin)
             collectedCoins += (coinsCollected * 50)
+            
             withAnimation {
                 for r in rClear { for c in 0..<cols { grid[r][c] = nil } }
                 for c in cClear { for r in 0..<rows { grid[r][c] = nil } }
@@ -302,19 +444,22 @@ struct GameCoins: View {
 }
 
 // MARK: - Subviews
+
 struct CoinBoardCellView: View {
     let cell: CoinGridCell?
     let emptyColor: Color
     var body: some View {
         ZStack {
             Rectangle().fill(cell?.color ?? emptyColor).cornerRadius(2)
-            if cell?.hasCoin == true { Image("coin").resizable().padding(4) }
+            if cell?.hasCoin == true {
+                Image("coin").resizable().padding(4)
+            }
         }
     }
 }
 
 struct CoinPowerButton: View {
-    let iconName: String; let color: Color; let progress: Double; let isActive: Bool; let action: () -> Void
+    let iconName: String, color: Color, progress: Double, isActive: Bool, action: () -> Void
     var body: some View {
         Button(action: action) {
             ZStack {
@@ -322,7 +467,8 @@ struct CoinPowerButton: View {
                 Circle().fill(isActive ? color : color.opacity(progress >= 1.0 ? 0.9 : 0.3)).frame(width: 50, height: 50)
                     .overlay(Image(iconName).resizable().renderingMode(.template).frame(width: 25, height: 25).foregroundColor(.white))
             }
-        }.disabled(progress < 1.0)
+        }
+        .disabled(progress < 1.0)
     }
 }
 
@@ -341,12 +487,16 @@ struct CoinDraggableBlock: View {
                     ForEach(0..<block.shape[r].count, id: \.self) { c in
                         if block.shape[r][c] == 1 {
                             CoinBlockCellView(
-                                color: block.color, size: currentSize,
-                                isBomb: isBombActive, isDrag: isDragging,
+                                color: block.color,
+                                size: currentSize,
+                                isBomb: isBombActive,
+                                isDrag: isDragging,
                                 isRotate: isRotateActive,
                                 hasCoin: (block.coinPosition?.r == r && block.coinPosition?.c == c)
                             )
-                        } else { Color.clear.frame(width: currentSize, height: currentSize) }
+                        } else {
+                            Color.clear.frame(width: currentSize, height: currentSize)
+                        }
                     }
                 }
             }
@@ -368,10 +518,11 @@ struct CoinBlockCellView: View {
     }
 }
 
-extension GameCoins {
-    static let pieceColors: [Color] = [
-        Color(red: 247/255, green: 204/255, blue: 89/255),
-        Color(red: 65/255, green: 35/255, blue: 92/255),
-        Color(red: 176/255, green: 65/255, blue: 82/255)
-    ]
+// MARK: - Preview Fix
+
+struct GameCoins_Previews: PreviewProvider {
+    static var previews: some View {
+        GameCoins()
+            .environmentObject(UpgradeVM()) // Inject VM for preview
+    }
 }

@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct AfterPuzzleScreen: View {
+    // ✅ ADDED: This lets the Game pass the real number to this screen
+    var score: Int
     
     // MARK: - Colors
     private let purple = Color(red: 0x41/255, green: 0x23/255, blue: 0x5C/255)
@@ -76,7 +78,8 @@ struct AfterPuzzleScreen: View {
                             .shadow(color: .black.opacity(0.25), radius: 8, x: 0, y: 6)
                             .padding(.top, -10)
                         
-                        Text("1500")
+                        // ✅ UPDATED: Now shows the REAL score instead of "1500"
+                        Text("\(score)")
                             .font(.custom("Arial-Black", size: 24))
                             .foregroundStyle(.white)
                             .shadow(color: .black.opacity(0.25), radius: 1, x: 0, y: 1)
@@ -103,9 +106,10 @@ struct AfterPuzzleScreen: View {
     }
 }
 
+// ✅ PREVIEW FIX (This stops the "Missing argument" error)
 struct AfterPuzzleScreen_Previews: PreviewProvider {
     static var previews: some View {
-        AfterPuzzleScreen()
-            .previewDevice("iPhone 14") // full screen preview
+        AfterPuzzleScreen(score: 1500)
+            .previewDevice("iPhone 14")
     }
 }

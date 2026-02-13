@@ -6,9 +6,8 @@ class RoomScene: SKScene{
     
     var onFurnitureClicked: ((Furniture) -> Void)?
     
-    // for both iphone and ipad screens
     private var furnitureScale: CGFloat {
-            let referenceWidth: CGFloat = 393 //iphone 15 pro size
+            let referenceWidth: CGFloat = 393
             let scaleFactor = size.width / referenceWidth
             return min(max(scaleFactor, 1.0), 2.5)
         }
@@ -28,7 +27,6 @@ class RoomScene: SKScene{
             let aspectRatio = size.width / size.height
             let bgMultiplier: CGFloat
             
-            // bigger furniture for bigger screen
             if aspectRatio > 0.6 {
                 bgMultiplier = 2.5
             } else {
@@ -37,31 +35,35 @@ class RoomScene: SKScene{
             
             bg.setScale(baseScale * bgMultiplier)
             bg.zPosition = -1
-//            bg.name = "background" //what??
             addChild(bg)
         }
         
     private func addFurniture() {
         children.filter { $0.zPosition != -1 }.forEach { $0.removeFromParent() }
                 
-                // Add furniture with current state
-                for item in furnitureList {
-                    let sprite = SKSpriteNode(imageNamed: item.currentImage)
-                    
-                    sprite.position = CGPoint(
-                        x: size.width * item.position.x,
-                        y: size.height * item.position.y
-                    )
-                    sprite.zPosition = item.zPosition
-                    sprite.setScale(item.scale * furnitureScale)
-                    sprite.name = item.name
-                    
-                    addChild(sprite)
-                }
+        for item in furnitureList {
+            let sprite = SKSpriteNode(imageNamed: item.currentImage)
+            
+            sprite.position = CGPoint(
+                x: size.width * item.position.x,
+                y: size.height * item.position.y
+            )
+            sprite.zPosition = item.zPosition
+            sprite.setScale(item.scale * furnitureScale)
+            sprite.name = item.name
+            
+            // ✅ GOLD TINT LOGIC
+            if item.equippedUpgradeIndex != nil {
+                sprite.color = .yellow
+                sprite.colorBlendFactor = 0.4
+            } else {
+                sprite.colorBlendFactor = 0.0
+            }
+            
+            addChild(sprite)
+        }
     }
     
-    
-     
     func refreshAllFurniture() {
         addFurniture()
     }

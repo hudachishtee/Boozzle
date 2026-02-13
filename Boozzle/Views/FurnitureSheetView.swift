@@ -15,7 +15,7 @@ struct FurnitureSheetView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // Background gradient for both modes
+                // Background gradient
                 LinearGradient(
                     colors: [Color(hex: "C24D32"), Color(hex: "481143")],
                     startPoint: .top,
@@ -30,9 +30,7 @@ struct FurnitureSheetView: View {
                             isShopMode: isShopMode,
                             coins: viewModel.coins,
                             onCleanTap: {
-                                // 1. Save which item we chose
                                 selectedFurniture = item
-                                // 2. Close the sheet (RoomView will handle the rest)
                                 dismiss()
                             },
                             onPurchase: { upgradeIndex in
@@ -47,7 +45,7 @@ struct FurnitureSheetView: View {
                         .listRowBackground(Color.clear)
                     }
                 }
-                .scrollContentBackground(.hidden) // Hide default list background
+                .scrollContentBackground(.hidden)
                 .background(Color.clear)
             }
             .navigationTitle(isShopMode ? "Shop" : "Upgrade furniture")
@@ -64,7 +62,7 @@ struct FurnitureSheetView: View {
     }
 }
 
-// ✅ Individual furniture row (Kept exactly as you designed)
+// ✅ FIXED FURNITURE ROW (Shows Gold in Shop)
 struct FurnitureRow: View {
     let furniture: Furniture
     let isShopMode: Bool
@@ -78,9 +76,9 @@ struct FurnitureRow: View {
     
     var body: some View {
         HStack(spacing: 16) {
-            // ✅ Furniture image
+            // IMAGE AREA
             if isShopMode && !furniture.upgrades.isEmpty {
-                // Shop mode logic
+                // Shop mode scrolling
                 HStack(spacing: 8) {
                     Button(action: { previousVersion() }) {
                         Image(systemName: "chevron.left")
@@ -90,12 +88,16 @@ struct FurnitureRow: View {
                     .disabled(selectedUpgradeIndex == 0)
                     .opacity(selectedUpgradeIndex == 0 ? 0.3 : 1.0)
                     
-                    if selectedUpgradeIndex == 0 {
-                        Image(furniture.cleanedImage)
-                            .resizable().scaledToFit().frame(width: 80, height: 80)
-                    } else {
-                        Image(furniture.upgrades[selectedUpgradeIndex - 1].image)
-                            .resizable().scaledToFit().frame(width: 80, height: 80)
+                    ZStack {
+                        if selectedUpgradeIndex == 0 {
+                            Image(furniture.cleanedImage)
+                                .resizable().scaledToFit().frame(width: 80, height: 80)
+                        } else {
+                            // ✅ SHOWS UPGRADE (TINTED GOLD)
+                            Image(furniture.upgrades[selectedUpgradeIndex - 1].image)
+                                .resizable().scaledToFit().frame(width: 80, height: 80)
+                                .colorMultiply(.yellow) // TINT!
+                        }
                     }
                     
                     Button(action: { nextVersion() }) {
@@ -106,15 +108,16 @@ struct FurnitureRow: View {
                     .disabled(selectedUpgradeIndex >= furniture.upgrades.count)
                     .opacity(selectedUpgradeIndex >= furniture.upgrades.count ? 0.3 : 1.0)
                 }
-                .frame(width: 120)
+                .frame(width: 150)
             } else {
+                // Normal mode
                 Image(furniture.currentImage)
                     .resizable().scaledToFit().frame(width: 80, height: 80)
             }
             
             Spacer()
             
-            // ✅ Button (Clean or Buy)
+            // BUTTON AREA
             if isShopMode {
                 shopButton
             } else {
@@ -147,15 +150,14 @@ struct FurnitureRow: View {
         } message: {
             if let upgrade = selectedUpgrade {
                 if coins < upgrade.price {
-                    Text("Not enough coins! You need \(upgrade.price) but only have \(coins).")
+                    Text("Need \(upgrade.price) coins. You have \(coins).")
                 } else {
-                    Text("Buy \(upgrade.name) for \(upgrade.price) coins?")
+                    Text("Buy \(upgrade.name) for \(upgrade.price)?")
                 }
             }
         }
     }
     
-    // ✅ Clean button
     @ViewBuilder
     private var cleanButton: some View {
         if furniture.isCleaned {
@@ -198,7 +200,7 @@ struct FurnitureRow: View {
             let upgrade = furniture.upgrades[selectedUpgradeIndex - 1]
             let canAfford = coins >= upgrade.price
             
-            Button("Buy \(upgrade.price)") {
+            Button("\(upgrade.price)") {
                 selectedUpgrade = upgrade
                 showPurchaseConfirmation = true
             }
@@ -217,8 +219,8 @@ struct FurnitureRow: View {
         if selectedUpgradeIndex > 0 { selectedUpgradeIndex -= 1 }
     }
 }
-
-// Helper for Hex colors
+// MARK: - Color Hex Helper
+// PASTE THIS AT THE VERY BOTTOM OF FurnitureSheetView.swift
 extension Color {
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
