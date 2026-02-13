@@ -47,6 +47,8 @@ class RoomScene: SKScene {
     
     private func addFurniture() {
         for item in furnitureList {
+            // Because we updated Models.swift, 'item.currentImage'
+            // will now automatically return "sofa-gold" when equipped.
             let sprite = SKSpriteNode(imageNamed: item.currentImage)
             
             sprite.position = CGPoint(
@@ -57,13 +59,8 @@ class RoomScene: SKScene {
             sprite.setScale(item.scale * furnitureScale)
             sprite.name = item.name
             
-            // ✅ VISUALS: Turn it Gold if it's an Upgrade!
-            if let equippedIndex = item.equippedUpgradeIndex, equippedIndex >= 0 {
-                sprite.color = .yellow
-                sprite.colorBlendFactor = 0.4
-            } else {
-                sprite.colorBlendFactor = 0.0
-            }
+            // ✅ CLEANED UP: No more yellow tint logic.
+            // Your real gold assets will display naturally.
             
             addChild(sprite)
         }

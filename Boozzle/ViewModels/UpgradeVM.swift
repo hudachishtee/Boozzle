@@ -13,6 +13,20 @@ class UpgradeVM: ObservableObject {
     init() {
         furniture[.livingRoom] = Furniture.livingRoomFurniture
         furniture[.bedroom] = Furniture.bedroomFurniture
+        
+        // 🚨--- DEV HACK START ---🚨
+        // Gives you 5000 coins and cleans everything instantly
+        self.coins = 5000
+        
+        for room in RoomType.allCases {
+            if var roomItems = furniture[room] {
+                for i in 0..<roomItems.count {
+                    roomItems[i].isCleaned = true
+                }
+                furniture[room] = roomItems
+            }
+        }
+        // 🚨--- DEV HACK END ---🚨
     }
     
     func forceUpdate() {
@@ -72,15 +86,13 @@ class UpgradeVM: ObservableObject {
         guard var roomFurniture = furniture[room],
               let index = roomFurniture.firstIndex(where: { $0.name == furnitureName }) else { return false }
         
-        // 🛑 CRASH FIX: Ensure the upgrade actually exists
         guard upgradeIndex >= 0 && upgradeIndex < roomFurniture[index].upgrades.count else {
-            print("Safety Catch: Upgrade index \(upgradeIndex) out of bounds.")
             return false
         }
         
         let upgrade = roomFurniture[index].upgrades[upgradeIndex]
         
-        // If already owned, just equip (Fail-safe)
+        // If already owned, just equip
         if roomFurniture[index].ownedUpgradeIndices.contains(upgradeIndex) {
             equipItem(room: room, furnitureName: furnitureName, upgradeIndex: upgradeIndex)
             return true
