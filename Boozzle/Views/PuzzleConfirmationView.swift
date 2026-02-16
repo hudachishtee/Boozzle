@@ -21,7 +21,9 @@ struct PuzzleConfirmationView: View {
                 Spacer(minLength: 40)
 
                 Image("ghostie")
-                    .resizable().scaledToFit().frame(height: 150)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 150)
                     .shadow(color: .black.opacity(0.25), radius: 6, y: 4)
 
                 VStack(spacing: 16) {
@@ -31,19 +33,21 @@ struct PuzzleConfirmationView: View {
                         .shadow(color: .black.opacity(0.45), radius: 1, y: 1)
 
                     Image(furniture.uncleanImage)
-                        .resizable().scaledToFit().frame(maxHeight: 180)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxHeight: 180)
                         .shadow(color: .black.opacity(0.25), radius: 8, y: 6)
                 }
                 .padding(22)
-                .frame(maxWidth: .infinity)
+                .frame(width: 300)
                 .background(
                     RoundedRectangle(cornerRadius: 24, style: .continuous)
                         .fill(lightpurp.opacity(0.7))
                         .overlay(RoundedRectangle(cornerRadius: 24).stroke(lightpurp.opacity(0.95), lineWidth: 4))
                 )
-                .padding(.horizontal, 28)
 
                 NavigationLink(destination: Game(
+                    restoredImageName: furniture.cleanedImage,
                     onWin: {
                         vm.markFurnitureAsCleaned(room: room, furnitureName: furniture.name)
                     },
@@ -64,5 +68,6 @@ struct PuzzleConfirmationView: View {
                 Spacer()
             }
         }
+        .navigationBarBackButtonHidden(true)
     }
 }

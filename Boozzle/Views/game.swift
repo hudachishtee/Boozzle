@@ -27,6 +27,7 @@ let SHAPES: [[[Int]]] = [
 ]
 
 struct Game: View {
+    var restoredImageName: String
     var onWin: () -> Void = {}
     @Binding var shouldPopToRoot: Bool
     
@@ -62,7 +63,8 @@ struct Game: View {
     @State private var gridFrame: CGRect = .zero
     @State private var cellSize: CGFloat = 0
     
-    init(onWin: @escaping () -> Void = {}, shouldPopToRoot: Binding<Bool> = .constant(false)) {
+    init(restoredImageName: String = "ghostie", onWin: @escaping () -> Void = {}, shouldPopToRoot: Binding<Bool> = .constant(false)) {
+        self.restoredImageName = restoredImageName
         self.onWin = onWin
         self._shouldPopToRoot = shouldPopToRoot
         _hand = State(initialValue: Game.generateHand(colors: [
@@ -145,6 +147,7 @@ struct Game: View {
                 if isGameWon || isGameOver {
                     PuzzleResultView(
                         didWin: isGameWon,
+                        restoredImageName: restoredImageName, // 🚨 Hands the image off to the Result View!
                         resetAction: { resetGame() },
                         successAction: {
                             onWin()

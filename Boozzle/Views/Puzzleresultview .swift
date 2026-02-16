@@ -2,6 +2,7 @@ import SwiftUI
 
 struct PuzzleResultView: View {
     var didWin: Bool
+    var restoredImageName: String
     var resetAction: () -> Void
     var successAction: () -> Void = {}
     
@@ -10,27 +11,12 @@ struct PuzzleResultView: View {
     private let buttonPurple = Color(red: 0x67/255, green: 0x2F/255, blue: 0x50/255)
     private let lightpurp = Color(red: 0x58/255, green: 0x2A/255, blue: 0x54/255)
 
-    private let topPadding: CGFloat = 72
-    private let ghostHeightWin: CGFloat = 150
-    private let ghostHeightLose: CGFloat = 150
-    private let cardCornerRadius: CGFloat = 24
-    private let cardHeight: CGFloat = 260
-    private let cardHorizontalPadding: CGFloat = 28
-    private let titleFontSize: CGFloat = 26
-    private let chairMaxWidth: CGFloat = 290
-    private let chairMaxHeight: CGFloat = 180
-    private let buttonHorizontalPadding: CGFloat = 40
-    private let buttonVerticalPadding: CGFloat = 18
-    private let buttonFontSize: CGFloat = 26
-    private let spacingAfterGhost: CGFloat = 32
-    private let spacingAfterCard: CGFloat = 36
-
     var body: some View {
         ZStack {
             LinearGradient(colors: [purple, orange], startPoint: .top, endPoint: .bottom)
                 .ignoresSafeArea()
 
-            content.padding(.horizontal, 0)
+            content
         }
     }
 
@@ -39,95 +25,83 @@ struct PuzzleResultView: View {
         if didWin {
             winningView
                 .contentShape(Rectangle())
-                .onTapGesture {
-                    successAction()
-                }
+                .onTapGesture { successAction() }
         } else {
             losingView
         }
     }
 
     private var winningView: some View {
-        VStack(spacing: 0) {
-            Spacer().frame(height: topPadding)
+        VStack(spacing: 25) {
+            Spacer(minLength: 40)
 
             Text("Item restored!")
-                .font(.custom("Arial-Black", size: titleFontSize))
-                .kerning(0.5)
-                .foregroundStyle(.white.opacity(0.98))
-                .shadow(color: .black.opacity(0.45), radius: 1.2, x: 0, y: 1)
+                .font(.custom("Arial-Black", size: 28))
+                .foregroundStyle(.white)
+                .shadow(color: .black.opacity(0.45), radius: 1, y: 1)
 
             Image("ghostie")
-                .resizable().scaledToFit().frame(height: ghostHeightWin)
-                .shadow(color: .black.opacity(0.25), radius: 6, x: 0, y: 4)
-                .padding(.top, 6)
+                .resizable()
+                .scaledToFit()
+                .frame(height: 140)
+                .shadow(color: .black.opacity(0.25), radius: 6, y: 4)
 
-            Spacer().frame(height: spacingAfterGhost)
-
-            ZStack {
-                RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous)
-                    .fill(lightpurp)
-                    .overlay(RoundedRectangle(cornerRadius: cardCornerRadius).stroke(lightpurp, lineWidth: 4))
-
-                RadialGradient(
-                    gradient: Gradient(colors: [
-                        Color(red: 255/255, green: 218/255, blue: 119/255).opacity(0.55),
-                        Color.orange.opacity(0.12),
-                        Color.clear
-                    ]),
-                    center: .center, startRadius: 10, endRadius: 260
-                )
-                .clipShape(RoundedRectangle(cornerRadius: cardCornerRadius, style: .continuous))
-                .allowsHitTesting(false)
-
-                VStack(spacing: 12) {
-                    Image("chair")
-                        .resizable().scaledToFit().frame(maxWidth: chairMaxWidth, maxHeight: chairMaxHeight)
-                        .shadow(color: .black.opacity(0.25), radius: 8, x: 0, y: 6)
-                        .padding(.top, 6)
-                }
-                .padding(.horizontal, 18).padding(.vertical, 20)
+            VStack {
+                Image(restoredImageName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxHeight: 180)
+                    .shadow(color: .black.opacity(0.25), radius: 8, y: 6)
             }
-            .frame(maxWidth: .infinity).frame(height: cardHeight)
-            .padding(.horizontal, cardHorizontalPadding)
-
-            Spacer().frame(height: spacingAfterCard)
+            .padding(22)
+            .frame(width: 300)
+            .background(
+                ZStack {
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .fill(lightpurp.opacity(0.7))
+                        .overlay(RoundedRectangle(cornerRadius: 24).stroke(lightpurp.opacity(0.95), lineWidth: 4))
+                    
+                    RadialGradient(
+                        gradient: Gradient(colors: [
+                            Color(red: 255/255, green: 218/255, blue: 119/255).opacity(0.55),
+                            Color.orange.opacity(0.12),
+                            Color.clear
+                        ]),
+                        center: .center, startRadius: 10, endRadius: 200
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 24))
+                }
+            )
 
             Text("tap to continue...")
                 .font(.custom("Arial-Black", size: 18))
                 .foregroundStyle(.white.opacity(0.85))
-                .shadow(color: .black.opacity(0.35), radius: 1, x: 0, y: 1)
+                .padding(.top, 10)
 
-            Spacer(minLength: 40)
+            Spacer()
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var losingView: some View {
         VStack(spacing: 20) {
             Spacer()
-
             Text("Game Over")
                 .font(.custom("Arial-Black", size: 30))
-                .foregroundStyle(.white.opacity(0.98))
-                .shadow(color: .black.opacity(0.45), radius: 1.2, x: 0, y: 1)
-
+                .foregroundStyle(.white)
             Image("ghostie")
-                .resizable().scaledToFit().frame(height: ghostHeightLose)
-                .shadow(color: .black.opacity(0.25), radius: 6, x: 0, y: 4)
-
-            VStack(spacing: 14) {
-                Button { resetAction() } label: {
-                    Text("Play again")
-                        .font(.custom("Arial-Black", size: buttonFontSize))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity).padding(.vertical, buttonVerticalPadding)
-                        .background(Capsule().fill(buttonPurple.opacity(0.7)))
-                        .overlay(Capsule().stroke(buttonPurple.opacity(0.95), lineWidth: 2))
-                }
+                .resizable().scaledToFit().frame(height: 150)
+            Button { resetAction() } label: {
+                Text("Play again")
+                    .font(.custom("Arial-Black", size: 26))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 18)
+                    .background(Capsule().fill(buttonPurple.opacity(0.7)))
             }
-            .padding(.horizontal, buttonHorizontalPadding)
-
+            .padding(.horizontal, 40)
             Spacer()
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
