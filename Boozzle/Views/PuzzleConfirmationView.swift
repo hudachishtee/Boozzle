@@ -24,7 +24,7 @@ struct PuzzleConfirmationView: View {
                         Image("back")
                             .resizable()
                             .aspectRatio(contentMode: .fit)
-                            .frame(width: 50, height: 50)
+                            .frame(width: 40, height: 40)
                             .shadow(radius: 2)
                             .contentShape(Rectangle())
                     }
