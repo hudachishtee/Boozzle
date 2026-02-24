@@ -147,7 +147,7 @@ struct Game: View {
                 if isGameWon || isGameOver {
                     PuzzleResultView(
                         didWin: isGameWon,
-                        restoredImageName: restoredImageName, // 🚨 Hands the image off to the Result View!
+                        restoredImageName: restoredImageName,
                         resetAction: { resetGame() },
                         successAction: {
                             onWin()
@@ -396,18 +396,17 @@ struct SettingsSheetView: View {
     }
 }
 
+
 struct SettingsRow: View {
     let title: String; let imageAsset: String; let goldColor: Color; let shadowColor: Color
     var action: () -> Void = {}
+    
     var body: some View {
         HStack {
             Text(title).font(.custom("Arial-Black", size: 20)).foregroundColor(.white.opacity(0.8))
             Spacer()
             Button(action: action) {
-                ZStack {
-                    Circle().fill(LinearGradient(colors: [goldColor, shadowColor], startPoint: .topLeading, endPoint: .bottomTrailing))
-                    Image(imageAsset).resizable().aspectRatio(contentMode: .fit).frame(width: 30, height: 30)
-                }.frame(width: 60, height: 60).shadow(radius: 3)
+                Image(imageAsset).resizable().aspectRatio(contentMode: .fit).frame(width: 40, height: 40).shadow(radius: 3)
             }
         }
     }

@@ -1,5 +1,5 @@
 import SwiftUI
-import SwiftData // ✅
+import SwiftData
 
 @main
 struct BoozzleApp: App {
@@ -10,7 +10,6 @@ struct BoozzleApp: App {
             MainView()
                 .environmentObject(upgradeVM)
         }
-        // ✅ Official SwiftData Registration
         .modelContainer(for: [PlayerSave.self, ItemSave.self])
     }
 }

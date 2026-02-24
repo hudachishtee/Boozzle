@@ -24,9 +24,9 @@ struct PuzzleConfirmationView: View {
                         Image("back")
                             .resizable()
                             .aspectRatio(contentMode: .fit)
-                            .frame(width: 50, height: 50) // Matched to MapView
-                            .shadow(radius: 2)           // Matched to MapView
-                            .contentShape(Rectangle())    // Matched to MapView
+                            .frame(width: 50, height: 50)
+                            .shadow(radius: 2)
+                            .contentShape(Rectangle())
                     }
                     Spacer()
                 }
@@ -72,13 +72,12 @@ struct PuzzleConfirmationView: View {
                         .font(.custom("Arial-Black", size: 26))
                         .foregroundStyle(.white)
                         .shadow(color: .black.opacity(0.45), radius: 1.2, x: 0, y: 1)
-                        .frame(maxWidth: .infinity)
+                        .frame(maxWidth: 300) // ✅ THE FIX: Caps the width to match the card exactly!
                         .padding(.vertical, 18)
                         .background(Capsule().fill(buttonPurple.opacity(0.7)))
                         .overlay(Capsule().stroke(buttonPurple.opacity(0.95), lineWidth: 2))
                 }
                 .buttonStyle(.plain)
-                .padding(.horizontal, 40)
 
                 Spacer()
             }

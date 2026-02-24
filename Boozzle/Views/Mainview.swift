@@ -23,12 +23,10 @@ struct MainView: View {
                     }
                     .buttonStyle(GameButtonStyle())
                 }
-                .frame(maxWidth: 350) // ✅ MAGIC NUMBER: Keeps iPhone normal, fixes iPad hotdogs!
-                .padding(.bottom, 80) // ✅ Safely above the bottom edge
+                .frame(maxWidth: 350)
+                .padding(.bottom, 80)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity) // ✅ Locks container to exact screen size
-            
-            // 2. BACKGROUND LAYER (Attached as a background so it can't stretch the UI)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(
                 Image("background first screen")
                     .resizable()
