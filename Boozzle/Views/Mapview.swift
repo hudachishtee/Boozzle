@@ -38,6 +38,7 @@ struct MapView: View {
                 Spacer()
                 
                 LazyVGrid(columns: columns, spacing: 0) {
+                    // 1. Living Room Logic
                     if vm.unlockedRooms.contains(.livingRoom) {
                         NavigationLink(destination: RoomView(roomType: .livingRoom)) {
                             RoomCell(imageName: "room_living", isLocked: false, lockColor: lockBgColor)
@@ -46,6 +47,7 @@ struct MapView: View {
                         RoomCell(imageName: "room_living", isLocked: true, lockColor: lockBgColor)
                     }
                     
+                    // 2. Bedroom Logic
                     if vm.unlockedRooms.contains(.bedroom) {
                         NavigationLink(destination: RoomView(roomType: .bedroom)) {
                             RoomCell(imageName: "room_bedroom", isLocked: false, lockColor: lockBgColor)
@@ -54,8 +56,23 @@ struct MapView: View {
                         RoomCell(imageName: "room_bedroom", isLocked: true, lockColor: lockBgColor)
                     }
                     
-                    RoomCell(imageName: "room_hallway", isLocked: true, lockColor: lockBgColor)
-                    RoomCell(imageName: "room_kitchen", isLocked: true, lockColor: lockBgColor)
+                    // 3. Library Logic (✅ Brought back "room_hallway")
+                    if vm.unlockedRooms.contains(.library) {
+                        NavigationLink(destination: RoomView(roomType: .library)) {
+                            RoomCell(imageName: "room_hallway", isLocked: false, lockColor: lockBgColor)
+                        }
+                    } else {
+                        RoomCell(imageName: "room_hallway", isLocked: true, lockColor: lockBgColor)
+                    }
+                    
+                    // 4. Kitchen Logic
+                    if vm.unlockedRooms.contains(.kitchen) {
+                        NavigationLink(destination: RoomView(roomType: .kitchen)) {
+                            RoomCell(imageName: "room_kitchen", isLocked: false, lockColor: lockBgColor)
+                        }
+                    } else {
+                        RoomCell(imageName: "room_kitchen", isLocked: true, lockColor: lockBgColor)
+                    }
                 }
                 .frame(maxHeight: .infinity)
                 Spacer()
@@ -65,6 +82,7 @@ struct MapView: View {
     }
 }
 
+// MapView Cell
 struct RoomCell: View {
     let imageName: String
     let isLocked: Bool

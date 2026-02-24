@@ -16,25 +16,17 @@ struct PuzzleResultView: View {
             LinearGradient(colors: [purple, orange], startPoint: .top, endPoint: .bottom)
                 .ignoresSafeArea()
 
-            content
+            if didWin {
+                winningLayout
+            } else {
+                losingLayout
+            }
         }
+        .navigationBarBackButtonHidden(true)
     }
 
-    @ViewBuilder
-    private var content: some View {
-        if didWin {
-            winningView
-                .contentShape(Rectangle())
-                .onTapGesture { successAction() }
-        } else {
-            losingView
-        }
-    }
-
-    private var winningView: some View {
+    private var winningLayout: some View {
         VStack(spacing: 25) {
-            Spacer(minLength: 40)
-
             Text("Item restored!")
                 .font(.custom("Arial-Black", size: 28))
                 .foregroundStyle(.white)
@@ -77,31 +69,34 @@ struct PuzzleResultView: View {
                 .font(.custom("Arial-Black", size: 18))
                 .foregroundStyle(.white.opacity(0.85))
                 .padding(.top, 10)
-
-            Spacer()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // 🚨 EMERGENCY OVERRIDE: NAILS IT TO THE EXACT CENTER OF THE SCREEN
+        .position(x: UIScreen.main.bounds.width / 2, y: UIScreen.main.bounds.height / 2)
+        .contentShape(Rectangle())
+        .onTapGesture { successAction() }
     }
 
-    private var losingView: some View {
+    private var losingLayout: some View {
         VStack(spacing: 20) {
-            Spacer()
             Text("Game Over")
                 .font(.custom("Arial-Black", size: 30))
                 .foregroundStyle(.white)
+            
             Image("ghostie")
-                .resizable().scaledToFit().frame(height: 150)
+                .resizable()
+                .scaledToFit()
+                .frame(height: 150)
+            
             Button { resetAction() } label: {
                 Text("Play again")
                     .font(.custom("Arial-Black", size: 26))
                     .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
+                    .frame(width: 280)
                     .padding(.vertical, 18)
                     .background(Capsule().fill(buttonPurple.opacity(0.7)))
             }
-            .padding(.horizontal, 40)
-            Spacer()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // 🚨 EMERGENCY OVERRIDE
+        .position(x: UIScreen.main.bounds.width / 2, y: UIScreen.main.bounds.height / 2)
     }
 }

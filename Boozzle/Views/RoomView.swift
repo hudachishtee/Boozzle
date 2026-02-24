@@ -31,7 +31,12 @@ struct RoomView: View {
                 // Top Bar
                 HStack(alignment: .top) {
                     Button(action: { dismiss() }) {
-                        Image("house-icon").resizable().frame(width: 50, height: 50)
+                        Image("house-icon")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit) // Added for scaling safety
+                            .frame(width: 50, height: 50)  // Updated to 50x50
+                            .shadow(radius: 2)             // Updated shadow to 2
+                            .contentShape(Rectangle())     // Added for better tap area
                     }
                     .padding(12)
                     

@@ -9,8 +9,11 @@ class UpgradeVM: ObservableObject {
     @Published var lastUpdateTimestamp: Date = Date()
     
     init() {
+        // Load all rooms into the game memory
         furniture[.livingRoom] = Furniture.livingRoomFurniture
         furniture[.bedroom] = Furniture.bedroomFurniture
+        furniture[.library] = Furniture.libraryFurniture
+        furniture[.kitchen] = Furniture.kitchenFurniture
     }
     
     func forceUpdate() {
@@ -43,7 +46,18 @@ class UpgradeVM: ObservableObject {
         forceUpdate()
     }
     
+    // ✅ The completed logic to unlock rooms in sequence
     private func unlockNextRoom(after currentRoom: RoomType) {
+        switch currentRoom {
+        case .livingRoom:
+            unlockedRooms.insert(.bedroom)
+        case .bedroom:
+            unlockedRooms.insert(.library)
+        case .library:
+            unlockedRooms.insert(.kitchen)
+        case .kitchen:
+            break // All rooms are fully unlocked!
+        }
     }
     
     func equipItem(room: RoomType, furnitureName: String, upgradeIndex: Int?) {

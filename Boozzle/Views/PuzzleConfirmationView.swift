@@ -6,6 +6,7 @@ struct PuzzleConfirmationView: View {
     
     @Binding var shouldPopToRoot: Bool
     @EnvironmentObject var vm: UpgradeVM
+    @Environment(\.dismiss) var dismiss
 
     private let purple = Color(red: 0x41/255, green: 0x23/255, blue: 0x5C/255)
     private let orange = Color(red: 0xC2/255, green: 0x4D/255, blue: 0x32/255)
@@ -18,7 +19,21 @@ struct PuzzleConfirmationView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 28) {
-                Spacer(minLength: 40)
+                HStack {
+                    Button(action: { dismiss() }) {
+                        Image("back")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 50, height: 50) // Matched to MapView
+                            .shadow(radius: 2)           // Matched to MapView
+                            .contentShape(Rectangle())    // Matched to MapView
+                    }
+                    Spacer()
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 10)
+
+                Spacer(minLength: 0)
 
                 Image("ghostie")
                     .resizable()

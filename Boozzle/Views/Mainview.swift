@@ -6,31 +6,35 @@ struct MainView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
+            // 1. UI BUTTON LAYER
+            VStack {
+                Spacer() // Pushes buttons to the bottom
+                
+                VStack(spacing: 14) {
+                    NavigationLink(destination: MapView()) {
+                        Text("Play")
+                    }
+                    .buttonStyle(GameButtonStyle())
+                    
+                    Button(action: {
+                        showSettings = true
+                    }) {
+                        Text("Settings")
+                    }
+                    .buttonStyle(GameButtonStyle())
+                }
+                .frame(maxWidth: 350) // ✅ MAGIC NUMBER: Keeps iPhone normal, fixes iPad hotdogs!
+                .padding(.bottom, 80) // ✅ Safely above the bottom edge
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity) // ✅ Locks container to exact screen size
+            
+            // 2. BACKGROUND LAYER (Attached as a background so it can't stretch the UI)
+            .background(
                 Image("background first screen")
                     .resizable()
-                    .scaledToFill()
+                    .scaledToFill() // Fills the screen beautifully on both devices
                     .ignoresSafeArea()
-
-                VStack {
-                    Spacer()
-                    VStack(spacing: 14) {
-                        NavigationLink(destination: MapView()) {
-                            Text("Play")
-                        }
-                        .buttonStyle(GameButtonStyle())
-                        
-                        Button(action: {
-                            showSettings = true
-                        }) {
-                            Text("Settings")
-                        }
-                        .buttonStyle(GameButtonStyle())
-                    }
-                    .padding(.horizontal, 40)
-                    .padding(.bottom, 120)
-                }
-            }
+            )
             .sheet(isPresented: $showSettings) {
                 SettingsSheetView(
                     isMainMenu: true,
@@ -50,7 +54,7 @@ struct GameButtonStyle: ButtonStyle {
             .font(.custom("Arial-Black", size: 26))
             .foregroundStyle(.white)
             .shadow(color: .black.opacity(0.45), radius: 1.2, x: 0, y: 1)
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity) // Still infinity, but safely trapped inside the 350 limit above!
             .padding(.vertical, 18)
             .background(Capsule().fill(buttonPurple.opacity(0.7)))
             .overlay(Capsule().stroke(buttonPurple.opacity(0.95), lineWidth: 2))
