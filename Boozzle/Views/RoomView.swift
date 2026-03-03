@@ -12,12 +12,17 @@ struct RoomView: View {
     @State private var navigateToGameCoins = false
     @State private var scene: RoomScene?
     
+    // 👻 Tutorial Control
+    @AppStorage("hasSeenRoomTutorial") private var hasSeenRoomTutorial = false
+    @State private var showGhostMessage = false
+    
     private var furniture: [Furniture] {
         vm.getFurniture(for: roomType)
     }
     
     var body: some View {
         ZStack {
+            
             // MARK: - Game Scene
             GeometryReader { geometry in
                 SpriteView(scene: createScene(size: geometry.size))
@@ -33,10 +38,10 @@ struct RoomView: View {
                     Button(action: { dismiss() }) {
                         Image("house-icon")
                             .resizable()
-                            .aspectRatio(contentMode: .fit) // Added for scaling safety
-                            .frame(width: 50, height: 50)  // Updated to 50x50
-                            .shadow(radius: 2)             // Updated shadow to 2
-                            .contentShape(Rectangle())     // Added for better tap area
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 50, height: 50)
+                            .shadow(radius: 2)
+                            .contentShape(Rectangle())
                     }
                     .padding(12)
                     
@@ -49,7 +54,9 @@ struct RoomView: View {
                                 .bold()
                                 .foregroundColor(.white)
                                 .shadow(color: .black, radius: 2)
-                            Image("coin-icon").resizable().frame(width: 60, height: 60)
+                            Image("coin-icon")
+                                .resizable()
+                                .frame(width: 60, height: 60)
                         }
                         
                         if vm.isRoomFullyCleaned(roomType) {
@@ -59,10 +66,12 @@ struct RoomView: View {
                                     .scaledToFit()
                                     .frame(width: 55, height: 55)
                                     .shadow(color: .black.opacity(0.5), radius: 3)
-                            }.transition(.scale)
+                            }
+                            .transition(.scale)
                         }
                     }
-                    .padding(.top, 10).padding(.trailing, 12)
+                    .padding(.top, 10)
+                    .padding(.trailing, 12)
                 }
                 
                 Spacer()
@@ -90,7 +99,24 @@ struct RoomView: View {
                     }
                 }
             }
+            
+            // 👻 Ghost Tutorial Overlay
+            if showGhostMessage {
+                GhostMessages(title: "Oh no! This room is dusty... Tap the brush to start cleaning the furniture!") {
+                    withAnimation {
+                        showGhostMessage = false
+                        hasSeenRoomTutorial = true
+                    }
+                }
+                .transition(AnyTransition.opacity)
+            }
         }
+        .onAppear {
+            if !hasSeenRoomTutorial {
+                showGhostMessage = true
+            }
+        }
+        .animation(.easeInOut, value: showGhostMessage)
         .navigationBarBackButtonHidden(true)
         
         // MARK: - Navigation & Sheets
@@ -141,5 +167,16 @@ struct RoomView: View {
         }
         
         return newScene
+    }
+}
+
+// MARK: - Preview
+#Preview {
+    // Minimal mock UpgradeVM for preview
+    let mockVM = UpgradeVM()
+    
+    NavigationStack {
+        RoomView(roomType: .livingRoom)
+            .environmentObject(mockVM)
     }
 }
