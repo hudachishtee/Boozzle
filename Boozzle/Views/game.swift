@@ -120,13 +120,17 @@ struct Game: View {
                                 }
                             }
                         }.padding(8)
+                        
                             .background(GeometryReader { boardGeo -> Color in
                                 DispatchQueue.main.async {
                                     self.gridFrame = boardGeo.frame(in: .global)
-                                    self.cellSize = (gridFrame.width - 16) / CGFloat(cols)
+                                    // 💡 التعديل الهندسي: حساب المسافات البينية (9 مسافات * 2 بكسل = 18 بكسل)
+                                    let totalSpacing = CGFloat(cols - 1) * 2
+                                    self.cellSize = (gridFrame.width - 16 - totalSpacing) / CGFloat(cols)
                                 }
                                 return Color.clear
                             })
+                        
                     }.aspectRatio(1, contentMode: .fit).padding(.horizontal, 20)
                     
                     Spacer()
@@ -247,12 +251,33 @@ struct Game: View {
     
     func handleDrop(index: Int, location: CGPoint) {
         let shape = hand[index].shape
-        let blockRows = shape.count; let blockCols = shape[0].count
-        let offsetX = (CGFloat(blockCols) * cellSize) / 2
-        let offsetY = (CGFloat(blockRows) * cellSize) / 2
-        let relativeX = location.x - gridFrame.minX - offsetX
-        let relativeY = location.y - gridFrame.minY - offsetY
-        let c = Int(round(relativeX / cellSize)); let r = Int(round(relativeY / cellSize))
+        let blockRows = shape.count
+        let blockCols = shape[0].count
+        
+        let stepSize = cellSize + 2
+        
+        let blockWidth = (CGFloat(blockCols) * cellSize) + (CGFloat(max(0, blockCols - 1)) * 2)
+        let blockHeight = (CGFloat(blockRows) * cellSize) + (CGFloat(max(0, blockRows - 1)) * 2)
+        
+        let offsetX = blockWidth / 2
+        let offsetY = blockHeight / 2
+    
+        
+        
+        
+        let gridStartX = gridFrame.minX + 8
+        let gridStartY = gridFrame.minY + 8
+        
+        // location  المركز الحقيقي للقطعة
+        let shapeTopLeftX = location.x - offsetX
+        let shapeTopLeftY = location.y - offsetY
+        
+        let relativeX = shapeTopLeftX - gridStartX
+        let relativeY = shapeTopLeftY - gridStartY
+        
+        let c = Int(round(relativeX / stepSize))
+        let r = Int(round(relativeY / stepSize))
+        
         if isBombActive {
             if progressBomb >= 1.0 && r >= -1 && r <= rows && c >= -1 && c <= cols {
                 triggerBomb(row: r + (blockRows/2), col: c + (blockCols/2))
@@ -262,6 +287,8 @@ struct Game: View {
             if canPlace(shape: shape, row: r, col: c) {
                 placeBlock(shape: shape, color: hand[index].color, row: r, col: c)
                 hand[index].isPlaced = true; checkLines(); checkRefill()
+            } else {
+                
             }
         }
     }
@@ -352,6 +379,10 @@ struct Game: View {
         isGameOver = false; isGameWon = false; hand = Game.generateHand(colors: pieceColors)
     }
 }
+//
+
+
+
 
 struct PowerUpButton: View {
     let iconName: String; let color: Color; let progress: Double; let isActive: Bool; let action: () -> Void
@@ -365,12 +396,27 @@ struct PowerUpButton: View {
         }.disabled(progress < 1.0)
     }
 }
+    
+    
+    
+    
+    
+    
+
+
+
+//
+
 
 struct DraggableBlock: View {
     let block: BlockItem, cellSize: CGFloat, gridCellSize: CGFloat, isBombMode: Bool, isRotateMode: Bool
     let onDragEnd: (CGPoint) -> Void, onTap: () -> Void
-    @State private var offset: CGSize = .zero; @State private var isDragging: Bool = false
+    @State private var offset: CGSize = .zero
+    @State private var isDragging: Bool = false
+    @State private var initialCenter: CGPoint = .zero // 💡 جديد: لحفظ المركز الأصلي بدقة
+    
     var currentCellSize: CGFloat { isDragging && gridCellSize > 0 ? gridCellSize : cellSize }
+    
     var body: some View {
         VStack(spacing: 2) {
             ForEach(0..<block.shape.count, id: \.self) { r in
@@ -383,12 +429,33 @@ struct DraggableBlock: View {
                 }
             }
         }
+        // 💡 التقاط المركز الحقيقي للقطعة قبل أن يبدأ السحب
+        .background(GeometryReader { geo -> Color in
+            DispatchQueue.main.async {
+                if !isDragging {
+                    self.initialCenter = CGPoint(x: geo.frame(in: .global).midX, y: geo.frame(in: .global).midY)
+                }
+            }
+            return Color.clear
+        })
         .offset(offset).onTapGesture { onTap() }
-        .gesture(DragGesture(coordinateSpace: .global).onChanged { val in isDragging = true; offset = val.translation }.onEnded { val in onDragEnd(val.location); offset = .zero; isDragging = false })
+        .gesture(
+            DragGesture(coordinateSpace: .global)
+                .onChanged { val in
+                    isDragging = true
+                    offset = val.translation
+                }
+                .onEnded { val in
+                    // 💡 السر هنا: نجمع المركز الأصلي مع مسافة السحب لنحصل على المركز الفعلي 100%
+                    let finalCenter = CGPoint(x: initialCenter.x + val.translation.width, y: initialCenter.y + val.translation.height)
+                    onDragEnd(finalCenter)
+                    offset = .zero
+                    isDragging = false
+                }
+        )
         .zIndex(isDragging ? 100 : 1)
     }
 }
-
 struct SettingsSheetView: View {
     @Environment(\.dismiss) var dismissSheet
     var isMainMenu: Bool = false
