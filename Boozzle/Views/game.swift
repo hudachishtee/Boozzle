@@ -62,6 +62,7 @@ struct Game: View {
     @State private var isRotateActive: Bool = false
     @State private var gridFrame: CGRect = .zero
     @State private var cellSize: CGFloat = 0
+    @State private var showPowerUpInfo: PowerUpType? = nil
     
     // MARK: Ghost Tutorial State
     @State private var showGhostTutorial = false
@@ -104,9 +105,32 @@ struct Game: View {
                     }.padding(.horizontal, 30).padding(.top, 5).padding(.bottom, 20)
                     
                     HStack(spacing: 30) {
-                        PowerUpButton(iconName: "shuffle", color: colorShuffle, progress: progressShuffle, isActive: false, action: activateShuffle)
-                        PowerUpButton(iconName: "rotate", color: colorRotate, progress: progressRotate, isActive: isRotateActive, action: { isRotateActive.toggle(); isBombActive = false })
-                        PowerUpButton(iconName: "bomb", color: colorBomb, progress: progressBomb, isActive: isBombActive, action: { isBombActive.toggle(); isRotateActive = false })
+                        PowerUpButton(
+                            iconName: "shuffle",
+                            color: colorShuffle,
+                            progress: progressShuffle,
+                            isActive: false,
+                            action: activateShuffle,
+                            onLongPress: { showPowerUpInfo = .shuffle }
+                        )
+                        
+                        PowerUpButton(
+                            iconName: "rotate",
+                            color: colorRotate,
+                            progress: progressRotate,
+                            isActive: isRotateActive,
+                            action: { isRotateActive.toggle(); isBombActive = false },
+                            onLongPress: { showPowerUpInfo = .rotate }
+                        )
+                        
+                        PowerUpButton(
+                            iconName: "bomb",
+                            color: colorBomb,
+                            progress: progressBomb,
+                            isActive: isBombActive,
+                            action: { isBombActive.toggle(); isRotateActive = false },
+                            onLongPress: { showPowerUpInfo = .bomb }
+                        )
                     }.padding(.bottom, 20)
                     
                     ZStack {
@@ -175,7 +199,17 @@ struct Game: View {
                     .transition(.opacity)
                     .zIndex(101)
                 }
-                
+                // MARK: Power-Up Info Overlay
+                if let powerUpType = showPowerUpInfo {
+                   PowerUpInstructions(
+                       powerUpType: powerUpType,
+                       colorShuffle: colorShuffle,
+                       colorRotate: colorRotate,
+                       colorBomb: colorBomb,
+                       onDismiss: { showPowerUpInfo = nil }
+                   )
+                   .zIndex(99)
+               }
                 if isGameWon || isGameOver {
                     PuzzleResultView(
                         didWin: isGameWon,
@@ -211,7 +245,7 @@ struct Game: View {
     func ghostMessage(for step: Int) -> String {
         switch step {
         case 0: return "Place blocks on the board to help restore the item!"
-        case 1: return "Purple changes the block. Yellow rotates it. Red is a bomb!"
+        case 1: return "Tap the power-ups once to use them. Long press them to see instructions."
         case 2: return "Fill the board to complete the restoration!"
         default: return ""
         }
@@ -385,15 +419,43 @@ struct Game: View {
 
 
 struct PowerUpButton: View {
-    let iconName: String; let color: Color; let progress: Double; let isActive: Bool; let action: () -> Void
+    let iconName: String;
+    let color: Color;
+    let progress: Double;
+    let isActive: Bool;
+    let action: () -> Void
+    let onLongPress: () -> Void  // show instructions
+    @State private var isPressing = false
+
     var body: some View {
-        Button(action: action) {
+        Button(action: {
+            // Keep empty so TapGesture can decide when to fire action()
+        }) {
             ZStack {
                 Circle().stroke(color.opacity(0.3), lineWidth: 5).frame(width: 60, height: 60)
                 Circle().fill(isActive ? color : color.opacity(progress >= 1.0 ? 0.9 : 0.3)).frame(width: 50, height: 50)
                     .overlay(Image(iconName).resizable().renderingMode(.template).frame(width: 25, height: 25).foregroundColor(.white))
             }
-        }.disabled(progress < 1.0)
+        }
+        .simultaneousGesture(
+            LongPressGesture(minimumDuration: 0.5)
+                .onChanged { _ in
+                    isPressing = true
+                }
+                .onEnded { _ in
+                    isPressing = false
+                    onLongPress()
+                }
+        )
+        .simultaneousGesture(
+            TapGesture()
+                .onEnded {
+                    if progress >= 1.0 {
+                        action()
+                    }
+                }
+        )
+        .disabled(progress < 1.0)
     }
 }
     
@@ -538,5 +600,11 @@ struct SettingsBottomButton: View {
             Text(title).font(.custom("Arial-Black", size: 20)).foregroundColor(.white).frame(maxWidth: .infinity).padding(.vertical, 16)
                 .background(Capsule().fill(color.opacity(0.8))).overlay(Capsule().stroke(color, lineWidth: 2))
         }
+    }
+}
+
+#Preview {
+    NavigationStack {
+        Game()
     }
 }
