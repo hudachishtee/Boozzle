@@ -60,3 +60,6 @@ struct GameButtonStyle: ButtonStyle {
             .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
     }
 }
+#Preview {
+    MainView()
+}

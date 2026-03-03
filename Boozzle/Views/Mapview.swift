@@ -4,6 +4,8 @@ struct MapView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var vm: UpgradeVM
     
+    @State private var showGhostMessage = true
+    
     private let purple = Color(red: 0x41/255, green: 0x23/255, blue: 0x5C/255)
     private let orange = Color(red: 0xC2/255, green: 0x4D/255, blue: 0x32/255)
     private let lockBgColor = Color(red: 0xA9/255, green: 0x3A/255, blue: 0x4E/255)
@@ -15,10 +17,13 @@ struct MapView: View {
     
     var body: some View {
         ZStack {
+            
+            // Background
             LinearGradient(colors: [purple, orange], startPoint: .top, endPoint: .bottom)
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
+                
                 HStack {
                     Button(action: {
                         dismiss()
@@ -38,7 +43,7 @@ struct MapView: View {
                 Spacer()
                 
                 LazyVGrid(columns: columns, spacing: 0) {
-                    // 1. Living Room Logic
+                    
                     if vm.unlockedRooms.contains(.livingRoom) {
                         NavigationLink(destination: RoomView(roomType: .livingRoom)) {
                             RoomCell(imageName: "room_living", isLocked: false, lockColor: lockBgColor)
@@ -47,7 +52,6 @@ struct MapView: View {
                         RoomCell(imageName: "room_living", isLocked: true, lockColor: lockBgColor)
                     }
                     
-                    // 2. Bedroom Logic
                     if vm.unlockedRooms.contains(.bedroom) {
                         NavigationLink(destination: RoomView(roomType: .bedroom)) {
                             RoomCell(imageName: "room_bedroom", isLocked: false, lockColor: lockBgColor)
@@ -56,7 +60,6 @@ struct MapView: View {
                         RoomCell(imageName: "room_bedroom", isLocked: true, lockColor: lockBgColor)
                     }
                     
-                    // 3. Library Logic (✅ Brought back "room_hallway")
                     if vm.unlockedRooms.contains(.library) {
                         NavigationLink(destination: RoomView(roomType: .library)) {
                             RoomCell(imageName: "room_hallway", isLocked: false, lockColor: lockBgColor)
@@ -65,7 +68,6 @@ struct MapView: View {
                         RoomCell(imageName: "room_hallway", isLocked: true, lockColor: lockBgColor)
                     }
                     
-                    // 4. Kitchen Logic
                     if vm.unlockedRooms.contains(.kitchen) {
                         NavigationLink(destination: RoomView(roomType: .kitchen)) {
                             RoomCell(imageName: "room_kitchen", isLocked: false, lockColor: lockBgColor)
@@ -75,14 +77,26 @@ struct MapView: View {
                     }
                 }
                 .frame(maxHeight: .infinity)
+                
                 Spacer()
             }
+            
+            // 👻 Ghost Overlay
+            if showGhostMessage {
+                GhostMessages(title: "Choose a room to start cleaning!") {
+                    withAnimation {
+                        showGhostMessage = false
+                    }
+                }
+                .transition(AnyTransition.opacity)
+            }
         }
+        .animation(.easeInOut, value: showGhostMessage)
         .navigationBarBackButtonHidden(true)
     }
 }
 
-// MapView Cell
+// MARK: - RoomCell
 struct RoomCell: View {
     let imageName: String
     let isLocked: Bool
@@ -115,5 +129,13 @@ struct RoomCell: View {
             }
         }
         .contentShape(Rectangle())
+    }
+}
+
+// MARK: - Preview
+#Preview {
+    NavigationStack {
+        MapView()
+            .environmentObject(UpgradeVM())
     }
 }

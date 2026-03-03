@@ -1,87 +1,62 @@
-//
-//  GhostMessageView.swift
-//  Boozzle
-//
-//  Created by Huda Chishtee on 03/03/2026.
-//
-
-//
-//  GhostMessageView.swift
-//  Boozzle
-//
-//  Created by Huda Chishtee on 13/02/2026.
-//
-
 import SwiftUI
 
-struct GhostPopupView: View {
+struct GhostMessages: View {
 
-    // MARK: - Inputs (custom brick)
+    // MARK: - Inputs
     let title: String
     let onTap: () -> Void
 
     var body: some View {
-        ZStack {
+        VStack {
+            Spacer()
 
-            // Background gradient
-            LinearGradient(
-                colors: [
-                    Color(hex: "41235C"),
-                    Color(hex: "C24D32")
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
+            // Bubble + Ghost container
+            ZStack(alignment: .bottomLeading) {
 
-            VStack {
-                Spacer()
+                // Bubble
+                ZStack {
+                    RoundedRectangle(cornerRadius: 40)
+                        .fill(Color.white)
 
-                // Bubble + Ghost container
-                ZStack(alignment: .bottomLeading) {
-
-                    // Bubble container
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 40)
-                            .fill(Color.white)
-
-                        // ✅ TEXT IS NOW INSIDE THE BUBBLE
-                        Text(title)
-                            .font(.system(size: 23, weight: .medium))
-                            .foregroundColor(.black)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 30)
-                            .padding(.vertical, 30)
-                    }
-                    .frame(height: 200)
-                    .padding(.leading, 60)
-                    .padding(.trailing, 24)
-
-                    // Ghost
-                    Image("ghost")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 100)
-                        .offset(x: -10, y: 20)
+                    Text(title)
+                        .font(.system(size: 23, weight: .medium))
+                        .foregroundColor(.black)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 30)
+                        .padding(.vertical, 30)
                 }
+                .frame(height: 200)
+                .padding(.leading, 60)
+                .padding(.trailing, 24)
 
-                // Continue button
-                Button(action: onTap) {
-                    Text("Tap to continue")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.white)
-                        .padding(.top, 24)
-                }
-
-                Spacer().frame(height: 40)
+                // Ghost Image
+                Image("ghost")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 100)
+                    .offset(x: -10, y: 20)
             }
+
+            // Continue Button
+            Button(action: onTap) {
+                Text("Tap to continue")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white)
+                    .padding(.top, 24)
+            }
+
+            Spacer().frame(height: 40)
         }
+        .background(
+            Color.black.opacity(0.35) // 👈 subtle dim behind popup
+                .ignoresSafeArea()
+        )
     }
 }
 
 // MARK: - Preview
 #Preview {
-    GhostPopupView(
+    GhostMessages(
         title: "Click on that object to clean it",
         onTap: {}
     )
