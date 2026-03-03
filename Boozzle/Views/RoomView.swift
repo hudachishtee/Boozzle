@@ -5,24 +5,24 @@ struct RoomView: View {
     let roomType: RoomType
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var vm: UpgradeVM
-    
+
     @State private var selectedFurniture: Furniture?
     @State private var showFurnitureList = false
     @State private var navigateToPuzzle = false
     @State private var navigateToGameCoins = false
     @State private var scene: RoomScene?
-    
+
     // 👻 Tutorial Control
     @AppStorage("hasSeenRoomTutorial") private var hasSeenRoomTutorial = false
     @State private var showGhostMessage = false
-    
+
     private var furniture: [Furniture] {
         vm.getFurniture(for: roomType)
     }
-    
+
     var body: some View {
         ZStack {
-            
+
             // MARK: - Game Scene
             GeometryReader { geometry in
                 SpriteView(scene: createScene(size: geometry.size))
@@ -31,7 +31,7 @@ struct RoomView: View {
                         scene?.updateFurniture(newFurniture: furniture)
                     }
             }
-            
+
             VStack {
                 // Top Bar
                 HStack(alignment: .top) {
@@ -44,9 +44,9 @@ struct RoomView: View {
                             .contentShape(Rectangle())
                     }
                     .padding(12)
-                    
+
                     Spacer()
-                    
+
                     VStack(alignment: .trailing, spacing: 8) {
                         HStack(spacing: -5) {
                             Text("\(vm.coins)")
@@ -54,11 +54,9 @@ struct RoomView: View {
                                 .bold()
                                 .foregroundColor(.white)
                                 .shadow(color: .black, radius: 2)
-                            Image("coin-icon")
-                                .resizable()
-                                .frame(width: 60, height: 60)
+                            Image("coin-icon").resizable().frame(width: 60, height: 60)
                         }
-                        
+
                         if vm.isRoomFullyCleaned(roomType) {
                             Button { showFurnitureList = true } label: {
                                 Image("shop-icon")
@@ -73,9 +71,9 @@ struct RoomView: View {
                     .padding(.top, 10)
                     .padding(.trailing, 12)
                 }
-                
+
                 Spacer()
-                
+
                 // Bottom Action Button
                 HStack {
                     Spacer()
@@ -99,7 +97,7 @@ struct RoomView: View {
                     }
                 }
             }
-            
+
             // 👻 Ghost Tutorial Overlay
             if showGhostMessage {
                 GhostMessages(title: "Oh no! This room is dusty... Tap the brush to start cleaning the furniture!") {
@@ -108,7 +106,7 @@ struct RoomView: View {
                         hasSeenRoomTutorial = true
                     }
                 }
-                .transition(AnyTransition.opacity)
+                .transition(.opacity)
             }
         }
         .onAppear {
@@ -118,7 +116,7 @@ struct RoomView: View {
         }
         .animation(.easeInOut, value: showGhostMessage)
         .navigationBarBackButtonHidden(true)
-        
+
         // MARK: - Navigation & Sheets
         .sheet(isPresented: $showFurnitureList) {
             FurnitureSheetView(
@@ -129,7 +127,6 @@ struct RoomView: View {
             )
             .onDisappear {
                 vm.forceUpdate()
-                
                 if selectedFurniture != nil && !vm.isRoomFullyCleaned(roomType) {
                     navigateToPuzzle = true
                 }
@@ -151,21 +148,21 @@ struct RoomView: View {
             GameCoins().navigationBarBackButtonHidden(true)
         }
     }
-    
+
     private func createScene(size: CGSize) -> RoomScene {
         if let existingScene = scene {
             return existingScene
         }
-        
+
         let newScene = RoomScene(size: size)
         newScene.scaleMode = .aspectFill
         newScene.backgroundImage = roomType.backgroundImage
         newScene.furnitureList = furniture
-        
+
         DispatchQueue.main.async {
             self.scene = newScene
         }
-        
+
         return newScene
     }
 }
@@ -174,7 +171,7 @@ struct RoomView: View {
 #Preview {
     // Minimal mock UpgradeVM for preview
     let mockVM = UpgradeVM()
-    
+
     NavigationStack {
         RoomView(roomType: .livingRoom)
             .environmentObject(mockVM)

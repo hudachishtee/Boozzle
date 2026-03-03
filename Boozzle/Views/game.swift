@@ -63,6 +63,10 @@ struct Game: View {
     @State private var gridFrame: CGRect = .zero
     @State private var cellSize: CGFloat = 0
     
+    // MARK: Ghost Tutorial State
+    @State private var showGhostTutorial = false
+    @State private var ghostStep = 0
+    
     init(restoredImageName: String = "ghostie", onWin: @escaping () -> Void = {}, shouldPopToRoot: Binding<Bool> = .constant(false)) {
         self.restoredImageName = restoredImageName
         self.onWin = onWin
@@ -144,6 +148,30 @@ struct Game: View {
                     }.frame(height: 140).padding(.bottom, 20)
                 }
                 
+                // MARK: Ghost Tutorial Overlay
+                if showGhostTutorial {
+                    ZStack {
+                        Color.black.opacity(0.4).edgesIgnoringSafeArea(.all)
+                        VStack(spacing: 20) {
+                            Text(ghostMessage(for: ghostStep))
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .multilineTextAlignment(.center)
+                                .padding(20)
+                                .background(RoundedRectangle(cornerRadius: 15).fill(Color.purple.opacity(0.8)))
+                            
+                            Button("Got it") { nextGhostStep() }
+                                .padding(.vertical, 10)
+                                .padding(.horizontal, 25)
+                                .background(Capsule().fill(Color.orange))
+                                .foregroundColor(.white)
+                        }
+                        .frame(maxWidth: 300)
+                    }
+                    .transition(.opacity)
+                    .zIndex(101)
+                }
+                
                 if isGameWon || isGameOver {
                     PuzzleResultView(
                         didWin: isGameWon,
@@ -157,6 +185,11 @@ struct Game: View {
                     .transition(.opacity).zIndex(100)
                 }
             }
+            .onAppear {
+                if !UserDefaults.standard.bool(forKey: "hasShownPuzzleTutorial") {
+                    showGhostTutorial = true
+                }
+            }
         }
         .navigationBarBackButtonHidden(true)
         .sheet(isPresented: $showSettings) {
@@ -167,6 +200,25 @@ struct Game: View {
             )
             .presentationBackground(brandPurple)
             .interactiveDismissDisabled()
+        }
+    }
+    
+    // MARK: Ghost Tutorial Helpers
+    func ghostMessage(for step: Int) -> String {
+        switch step {
+        case 0: return "Place blocks on the board to help restore the item!"
+        case 1: return "Purple changes the block. Yellow rotates it. Red is a bomb!"
+        case 2: return "Fill the board to complete the restoration!"
+        default: return ""
+        }
+    }
+
+    func nextGhostStep() {
+        if ghostStep < 2 {
+            ghostStep += 1
+        } else {
+            showGhostTutorial = false
+            UserDefaults.standard.set(true, forKey: "hasShownPuzzleTutorial")
         }
     }
     
