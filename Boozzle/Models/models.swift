@@ -92,9 +92,9 @@ enum PowerUpType {
     
     var instruction: String {
         switch self {
-        case .shuffle: return "Changes all blocks to new random shapes"
-        case .rotate: return "Tap a block to rotate it 90 degrees"
-        case .bomb: return "Destroy a 3×3 area on the board"
+        case .shuffle: return "Press shuffle to change all blocks into new, random shapes"
+        case .rotate: return "Press Rotate then tap a block to rotate it 90 degrees"
+        case .bomb: return "Press the bomb then place a block on board to destroy a 3×3 area."
         }
     }
     
