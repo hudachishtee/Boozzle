@@ -27,7 +27,7 @@ struct RoomView: View {
             GeometryReader { geometry in
                 SpriteView(scene: createScene(size: geometry.size))
                     .ignoresSafeArea()
-                    .onChange(of: vm.lastUpdateTimestamp) { _ in
+                    .onChange(of: vm.lastUpdateTimestamp) { _, _ in
                         scene?.updateFurniture(newFurniture: furniture)
                     }
             }
@@ -100,7 +100,7 @@ struct RoomView: View {
 
             // 👻 Ghost Tutorial Overlay
             if showGhostMessage {
-                GhostMessages(title: "Oh no! This room is dusty... Tap the brush to start cleaning the furniture!") {
+                GhostMessages(title: "Oh no! This room looks dusty... grab your broom to start cleaning the furniture!") {
                     withAnimation {
                         showGhostMessage = false
                         hasSeenRoomTutorial = true
@@ -173,7 +173,7 @@ struct RoomView: View {
     let mockVM = UpgradeVM()
 
     NavigationStack {
-        RoomView(roomType: .livingRoom)
+        RoomView(roomType: .bedroom)
             .environmentObject(mockVM)
     }
 }

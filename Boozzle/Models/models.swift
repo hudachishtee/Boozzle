@@ -38,7 +38,7 @@ struct Furniture: Identifiable {
         Furniture(name: "Bed", uncleanImage: "bed-dirty", cleanedImage: "bed-clean", upgrades: [FurnitureUpgrade(name: "Golden Bed", image: "bed-gold", price: 1500)], position: CGPoint(x: 0.4, y: 0.37), zPosition: 1, scale: 1.0),
         Furniture(name: "Chandelier", uncleanImage: "chandelier-dirty", cleanedImage: "chandelier-clean", upgrades: [FurnitureUpgrade(name: "Golden Chandelier", image: "chandelier-gold", price: 1200)], position: CGPoint(x: 0.4, y: 0.67), zPosition: 1, scale: 0.5),
         Furniture(name: "Bookshelf", uncleanImage: "bookshelf-dirty", cleanedImage: "bookshelf-clean", upgrades: [FurnitureUpgrade(name: "Golden Bookshelf", image: "bookshelf-gold", price: 1000)], position: CGPoint(x: 0.788, y: 0.35), zPosition: 0, scale: 0.55),
-        Furniture(name: "Candle", uncleanImage: "candle-dirty", cleanedImage: "candle-clean", upgrades: [FurnitureUpgrade(name: "Golden Candle", image: "candle-gold", price: 800)], position: CGPoint(x: 0.2, y: 0.5), zPosition: 1, scale: 0.6)
+        Furniture(name: "Candle", uncleanImage: "candle-dirty", cleanedImage: "candle-clean", upgrades: [FurnitureUpgrade(name: "Golden Candle", image: "candle-gold", price: 800)], position: CGPoint(x: 0.78, y: 0.50), zPosition: 1, scale: 0.2)
     ]
     
     static let libraryFurniture: [Furniture] = [
@@ -75,6 +75,34 @@ enum RoomType: String, CaseIterable {
         switch self {
         case .livingRoom: return "livingRoom-bg"; case .bedroom: return "bedroom-bg-clean"
         case .library: return "library bg"; case .kitchen: return "kitchen bg"
+        }
+    }
+}
+
+enum PowerUpType {
+    case shuffle, rotate, bomb
+    
+    var title: String {
+        switch self {
+        case .shuffle: return "Shuffle"
+        case .rotate: return "Rotate"
+        case .bomb: return "Bomb"
+        }
+    }
+    
+    var instruction: String {
+        switch self {
+        case .shuffle: return "Changes all blocks to new random shapes"
+        case .rotate: return "Tap a block to rotate it 90 degrees"
+        case .bomb: return "Destroy a 3×3 area on the board"
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .shuffle: return "shuffle"
+        case .rotate: return "rotate"
+        case .bomb: return "bomb"
         }
     }
 }

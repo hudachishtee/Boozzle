@@ -83,7 +83,9 @@ struct MapView: View {
             
             // 👻 Ghost Overlay
             if showGhostMessage {
-                GhostMessages(title: "Choose a room to start cleaning!") {
+                GhostMessages(title: """
+                Boo welcomes you to the house! Let's begin our journey by entering a room.
+                """) {
                     withAnimation {
                         showGhostMessage = false
                     }

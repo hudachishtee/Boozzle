@@ -69,7 +69,8 @@ struct GameCoins: View {
     @State private var gridFrame: CGRect = .zero
     @State private var cellSize: CGFloat = 0
     @State private var showSettings = false
-    
+    @State private var showPowerUpInfo: PowerUpType? = nil
+
     init() {
         _hand = State(initialValue: GameCoins.generateHand(colors: GameCoins.pieceColors))
     }
@@ -82,12 +83,22 @@ struct GameCoins: View {
                 
                 VStack(spacing: 0) {
                     headerView
+                        .padding(.top, 5).padding(.bottom, 25)
                     powerUpsRow
                     gridView
                     Spacer()
                     handView
                 }
-                
+                if let powerUpType = showPowerUpInfo {
+                   PowerUpInstructions(
+                       powerUpType: powerUpType,
+                       colorShuffle: colorShuffle,
+                       colorRotate: colorRotate,
+                       colorBomb: colorBomb,
+                       onDismiss: { showPowerUpInfo = nil }
+                   )
+                   .zIndex(99)
+               }
                 if isGameOver {
                     gameOverView.zIndex(20)
                 }
@@ -140,10 +151,33 @@ struct GameCoins: View {
     
     private var powerUpsRow: some View {
         HStack(spacing: 30) {
-            CoinPowerButton(iconName: "shuffle", color: colorShuffle, progress: progressShuffle, isActive: false, action: activateShuffle)
-            CoinPowerButton(iconName: "rotate", color: colorRotate, progress: progressRotate, isActive: isRotateActive, action: { isRotateActive.toggle(); isBombActive = false })
-            CoinPowerButton(iconName: "bomb", color: colorBomb, progress: progressBomb, isActive: isBombActive, action: { isBombActive.toggle(); isRotateActive = false })
-        }
+            CoinPowerButton(
+                        iconName: "shuffle",
+                        color: colorShuffle,
+                        progress: progressShuffle,
+                        isActive: false,
+                        action: activateShuffle,
+                        onLongPress: { showPowerUpInfo = .shuffle }
+                    )
+                    
+                    CoinPowerButton(
+                        iconName: "rotate",
+                        color: colorRotate,
+                        progress: progressRotate,
+                        isActive: isRotateActive,
+                        action: { isRotateActive.toggle(); isBombActive = false },
+                        onLongPress: { showPowerUpInfo = .rotate }
+                    )
+                    
+                    CoinPowerButton(
+                        iconName: "bomb",
+                        color: colorBomb,
+                        progress: progressBomb,
+                        isActive: isBombActive,
+                        action: { isBombActive.toggle(); isRotateActive = false },
+                        onLongPress: { showPowerUpInfo = .bomb }
+                    )
+                }
         .padding(.bottom, 20)
     }
     
@@ -274,7 +308,7 @@ struct GameCoins: View {
     func activateShuffle() {
         if progressShuffle >= 1.0 {
             withAnimation {
-                var newItems = GameCoins.generateHand(colors: GameCoins.pieceColors)
+                let newItems = GameCoins.generateHand(colors: GameCoins.pieceColors)
                 for i in 0..<hand.count {
                     if !hand[i].isPlaced { hand[i] = newItems[i] }
                 }
@@ -415,15 +449,44 @@ struct CoinBoardCellView: View {
 }
 
 struct CoinPowerButton: View {
-    let iconName: String, color: Color, progress: Double, isActive: Bool, action: () -> Void
+    let iconName: String,
+        color: Color,
+        progress: Double,
+        isActive: Bool,
+        action: () -> Void
+        let onLongPress: () -> Void  // for powers
+        @State private var isPressing = false
+
+    
     var body: some View {
-        Button(action: action) {
+        Button(action: {
+            // Keep empty so TapGesture can decide when to fire action()
+        }) {
             ZStack {
                 Circle().stroke(color.opacity(0.3), lineWidth: 5).frame(width: 60, height: 60)
                 Circle().fill(isActive ? color : color.opacity(progress >= 1.0 ? 0.9 : 0.3)).frame(width: 50, height: 50)
                     .overlay(Image(iconName).resizable().renderingMode(.template).frame(width: 25, height: 25).foregroundColor(.white))
             }
-        }.disabled(progress < 1.0)
+        }
+        .simultaneousGesture(
+            LongPressGesture(minimumDuration: 0.5)
+                .onChanged { _ in
+                    isPressing = true
+                }
+                .onEnded { _ in
+                    isPressing = false
+                    onLongPress()
+                }
+        )
+        .simultaneousGesture(
+            TapGesture()
+                .onEnded {
+                    if progress >= 1.0 {
+                        action()
+                    }
+                }
+        )
+        .disabled(progress < 1.0)
     }
 }
 
@@ -469,4 +532,9 @@ struct CoinBlockCellView: View {
             if isRotate && !isDrag { Image(systemName: "arrow.triangle.2.circlepath").foregroundColor(.white).font(.caption) }
         }
     }
+}
+
+#Preview {
+    GameCoins()
+        .environmentObject(UpgradeVM())
 }
