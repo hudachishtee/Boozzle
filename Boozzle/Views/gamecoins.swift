@@ -200,7 +200,9 @@ struct GameCoins: View {
             .background(GeometryReader { boardGeo -> Color in
                 DispatchQueue.main.async {
                     self.gridFrame = boardGeo.frame(in: .global)
-                    self.cellSize = (gridFrame.width - 16) / CGFloat(cols)
+                    // ✅ Account for spacing between cells
+                    let totalSpacing = CGFloat(cols - 1) * 2
+                    self.cellSize = (gridFrame.width - 16 - totalSpacing) / CGFloat(cols)
                 }
                 return Color.clear
             })
@@ -331,12 +333,27 @@ struct GameCoins: View {
         let shape = hand[index].shape
         let blockRows = shape.count
         let blockCols = shape[0].count
-        let offsetX = (CGFloat(blockCols) * cellSize) / 2
-        let offsetY = (CGFloat(blockRows) * cellSize) / 2
-        let relativeX = location.x - gridFrame.minX - offsetX
-        let relativeY = location.y - gridFrame.minY - offsetY
-        let c = Int(round(relativeX / cellSize))
-        let r = Int(round(relativeY / cellSize))
+        
+        // ✅ SMOOTH GAMEPLAY: Account for spacing
+        let stepSize = cellSize + 2  // Cell size + spacing
+        
+        let blockWidth = (CGFloat(blockCols) * cellSize) + (CGFloat(max(0, blockCols - 1)) * 2)
+        let blockHeight = (CGFloat(blockRows) * cellSize) + (CGFloat(max(0, blockRows - 1)) * 2)
+        
+        let offsetX = blockWidth / 2
+        let offsetY = blockHeight / 2
+        
+        let gridStartX = gridFrame.minX + 8  // Account for padding
+        let gridStartY = gridFrame.minY + 8
+        
+        let shapeTopLeftX = location.x - offsetX
+        let shapeTopLeftY = location.y - offsetY
+        
+        let relativeX = shapeTopLeftX - gridStartX
+        let relativeY = shapeTopLeftY - gridStartY
+        
+        let c = Int(round(relativeX / stepSize))
+        let r = Int(round(relativeY / stepSize))
         
         if isBombActive {
             if progressBomb >= 1.0 && r >= -1 && r <= rows && c >= -1 && c <= cols {
@@ -353,8 +370,11 @@ struct GameCoins: View {
                 checkLines()
                 checkRefill()
             }
+            else {
+                
+            }
         }
-    }
+    }//smoother puzzle play
     
     func triggerBomb(row: Int, col: Int) {
         UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
@@ -425,6 +445,18 @@ struct GameCoins: View {
                 for c in 0..<cols where canPlace(shape: block.shape, row: r, col: c) { return false }
             }
         }
+        
+        // amnas Game code for{}
+        
+//        for block in hand where !block.isPlaced {
+//            var possible = false
+//            for r in 0..<rows { for c in 0..<cols {
+//                if canPlace(shape: block.shape, row: r, col: c) { possible = true; break }
+//                if progressRotate >= 1.0 {
+//                    var rotatedBlock = block; rotatedBlock.rotate()
+//                    if canPlace(shape: rotatedBlock.shape, row: r, col: c) { possible = true; break }
+//                }
+//            }
         return true
     }
     
@@ -496,7 +528,10 @@ struct CoinDraggableBlock: View {
     let onDragEnd: (CGPoint) -> Void, onTap: () -> Void
     @State private var offset: CGSize = .zero
     @State private var isDragging: Bool = false
-    var currentSize: CGFloat { isDragging ? gridCellSize : cellSize }
+    @State private var initialCenter: CGPoint = .zero // new
+//    var currentSize: CGFloat { isDragging ? gridCellSize : cellSize }
+         var currentSize: CGFloat { isDragging && gridCellSize > 0 ? gridCellSize : cellSize } //amnas
+
     
     var body: some View {
         VStack(spacing: 2) {
@@ -512,14 +547,44 @@ struct CoinDraggableBlock: View {
                                 isRotate: isRotateActive,
                                 hasCoin: (block.coinPosition?.r == r && block.coinPosition?.c == c)
                             )
-                        } else { Color.clear.frame(width: currentSize, height: currentSize) }
+                        } else {
+                            Color.clear.frame(width: currentSize, height: currentSize)
+                        }
                     }
                 }
             }
         }
+        // ✅ ADD: Capture block center before dragging
+        .background(GeometryReader { geo -> Color in
+            DispatchQueue.main.async {
+                if !isDragging {
+                    self.initialCenter = CGPoint(
+                        x: geo.frame(in: .global).midX,
+                        y: geo.frame(in: .global).midY
+                    )
+                }
+            }
+            return Color.clear
+        })
         .offset(offset)
         .onTapGesture { onTap() }
-        .gesture(DragGesture(coordinateSpace: .global).onChanged { isDragging = true; offset = $0.translation }.onEnded { onDragEnd($0.location); offset = .zero; isDragging = false })
+        .gesture(
+            DragGesture(coordinateSpace: .global)
+                .onChanged { val in
+                    isDragging = true
+                    offset = val.translation
+                }
+                .onEnded { val in
+                    // ✅ UPDATED: Use block center, not finger location
+                    let finalCenter = CGPoint(
+                        x: initialCenter.x + val.translation.width,
+                        y: initialCenter.y + val.translation.height
+                    )
+                    onDragEnd(finalCenter)
+                    offset = .zero
+                    isDragging = false
+                }
+        )
     }
 }
 
