@@ -480,6 +480,106 @@ struct CoinBoardCellView: View {
     }
 }
 
+
+struct CoinPowerButton: View {
+    let iconName: String
+    let color: Color
+    let progress: Double
+    let isActive: Bool
+    let action: () -> Void
+    let onLongPress: () -> Void
+    
+    @State private var isPressing = false
+
+    var isReady: Bool {
+        return progress >= 1.0
+    }
+
+    var body: some View {
+        Button(action: {
+            // يتم التحكم بالضغط من خلال TapGesture
+        }) {
+            ZStack {
+                // 1. المسار الخلفي
+                Circle()
+                    .stroke(color.opacity(0.15), lineWidth: 5)
+                    .frame(width: 60, height: 60)
+                
+                // 2. خط التقدم الدائري (ينسحب عند الاستخدام)
+                Circle()
+                    .trim(from: 0, to: isReady ? 1.0 : 0.0)
+                    .stroke(color, style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                    .frame(width: 60, height: 60)
+                    .rotationEffect(.degrees(-90))
+                    .animation(.easeInOut(duration: 0.4), value: isReady)
+                
+                // 3. الدائرة الداخلية (مع اللمعة الزجاجية المرتبطة بالجهوزية ✨)
+                Circle()
+                    .fill(isActive ? color : color.opacity(isReady ? 0.9 : 0.5))
+                    .frame(width: 50, height: 50)
+                    // 💡 اللمعة 1: تدرج زجاجي (تختفي إذا لم يكن جاهزاً)
+                    .overlay(
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [.white.opacity(0.4), .white.opacity(0.0)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .opacity(isReady ? 1.0 : 0.0) // 👈 السر هنا
+                    )
+                    // 💡 اللمعة 2: إطار داخلي يعكس الضوء (تختفي إذا لم يكن جاهزاً)
+                    .overlay(
+                        Circle()
+                            .stroke(
+                                LinearGradient(
+                                    colors: [.white.opacity(0.6), .clear, .clear],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1.5
+                            )
+                            .opacity(isReady ? 1.0 : 0.0) // 👈 والسر هنا
+                    )
+                    .scaleEffect(isActive ? 1.15 : 1.0)
+                    .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isActive)
+                    // أنيميشن لاختفاء اللمعة مع انسحاب الخط
+                    .animation(.easeInOut(duration: 0.4), value: isReady)
+                
+                // 4. الأيقونة
+                Image(iconName)
+                    .resizable()
+                    .renderingMode(.template)
+                    .frame(width: 25, height: 25)
+                    .foregroundColor(.white)
+                    // الظل يختفي أيضاً إذا تم الاستخدام لتبدو الأيقونة مسطحة تماماً
+                    .shadow(color: .black.opacity(isReady ? 0.2 : 0.0), radius: 1, y: 1)
+            }
+            .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        
+        .simultaneousGesture(
+            LongPressGesture(minimumDuration: 0.5)
+                .onChanged { _ in isPressing = true }
+                .onEnded { _ in
+                    isPressing = false
+                    onLongPress()
+                }
+        )
+        .simultaneousGesture(
+            TapGesture()
+                .onEnded {
+                    if isReady {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        action()
+                    }
+                }
+        )
+    }
+}
+/*
 struct CoinPowerButton: View {
     let iconName: String,
         color: Color,
@@ -521,6 +621,9 @@ struct CoinPowerButton: View {
         .disabled(progress < 1.0)
     }
 }
+
+
+*/
 
 struct CoinDraggableBlock: View {
     let block: CoinBlockItem, cellSize: CGFloat, gridCellSize: CGFloat
